@@ -1,4 +1,4 @@
-local version = "1"
+local version = "1.1"
 
 local alib = module.load("avada_lib")
 local common = alib.common
