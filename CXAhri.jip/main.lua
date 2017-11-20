@@ -1,4 +1,4 @@
-local version = "1.1"
+local version = "1"
 
 local alib = module.load("avada_lib")
 local common = alib.common
@@ -141,7 +141,7 @@ end--]]
 
 function AutoIgnite()
 	for i, enemy in ipairs(enemies) do
-        if common.IsValidTarget(enemy, 600) and enemy.health > 0 and common.GetDistance(player, target) <= 600 then
+        if common.IsValidTarget(enemy) and common.GetDistance(player, enemy) <= 600 then
             if menu.auto.Ignite:get() and common.CanUseSpell(igniteSlot) and igniteDmg[player.level] > enemy.health then game.cast("obj", igniteSlot, enemy) end
         end
     end
