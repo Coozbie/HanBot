@@ -1,4 +1,4 @@
-local version = "1"
+local version = "1.1"
 
 local alib = module.load("avada_lib")
 local common = alib.common
@@ -21,12 +21,12 @@ elseif player:spellslot(5).name == "SummonerDot" then
 	igniteSlot = 5
 end
 
-local menu = menuconfig("ahrigod", "[Cyrex Ahri]")
+local menu = menuconfig("ahrigod", "Cyrex Ahri")
 	ts = ts(menu, 1500)
 	menu:menu("keys", "Key Settings")
 		menu.keys:keybind("combo", "Combo Key", "Space", false)
 		menu.keys:keybind("harass", "Harass Key", "C", false)
-		--menu.keys:keybind("clear", "Clear Key", "V", false)
+		menu.keys:keybind("clear", "Clear Key", "V", false)
 		menu.keys:keybind("StartE", "Start Combo With E", false)
 	menu:menu("combo", "Combo Settings")
 		menu.combo:boolean("q", "Use Q", true)
@@ -141,7 +141,7 @@ end--]]
 
 function AutoIgnite()
 	for i, enemy in ipairs(enemies) do
-        if common.IsValidTarget(enemy, 600) and enemy.health > 0 then
+        if common.IsValidTarget(enemy, 600) and enemy.health > 0 and common.GetDistance(player, target) <= 600 then
             if menu.auto.Ignite:get() and common.CanUseSpell(igniteSlot) and igniteDmg[player.level] > enemy.health then game.cast("obj", igniteSlot, enemy) end
         end
     end
