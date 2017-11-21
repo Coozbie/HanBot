@@ -1,4 +1,4 @@
-local version = "1.1"
+local version = "1.2"
 
 local alib = module.load("avada_lib")
 local common = alib.common
@@ -11,7 +11,7 @@ local gpred = module.internal("pred")
 local enemies = common.GetEnemyHeroes()
 
 local qPred = { delay = 0.25, width = 80, speed = 1500, boundingRadiusMod = 1, collision = { hero = false, minion = false } }
-local ePred = { delay = 0.25, width = 60, speed = 1550, boundingRadiusMod = 1, collision = { hero = true, minion = true } }
+local ePred = { delay = 0.25, width = 50, speed = 1550, boundingRadiusMod = 1, collision = { hero = true, minion = true } }
 
 local igniteDmg = { 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310, 330, 350, 370, 390, 410 } --"50 + (20 * myHero.level)"
 local igniteSlot = nil
@@ -60,7 +60,7 @@ function Combo()
 		if target and not target.isDead then
 			if menu.combo.e:get() and common.CanUseSpell(2) then
 				local seg = gpred.linear.get_prediction(ePred, target)
-				if seg and seg.startPos:dist(seg.endPos) < 950 then
+				if seg and seg.startPos:dist(seg.endPos) < 940 then
 					if not gpred.collision.get_prediction(ePred, seg, target) then
 						game.cast("pos", 2, vec3(seg.endPos.x, game.mousePos.y, seg.endPos.y))
 					end
@@ -81,15 +81,15 @@ function Combo()
 				end
 			end
 			common.DelayAction(function() CastR() end, 1)
-			if menu.combo.zhonya:get() and common.GetPercentHealth(player) <= menu.combo.itemhp:get() then
-				for i = 6, 11 do
-			    	local item = player:spellslot(i).name
-			    	if item and item == "ZhonyasHourglass" then
-			    		game.cast("self", i)
-			    	end
-		        end
-			end
 		end
+	end
+	if menu.combo.zhonya:get() and common.GetPercentHealth(player) <= menu.combo.itemhp:get() then
+		for i = 6, 11 do
+	    	local item = player:spellslot(i).name
+	    	if item and item == "ZhonyasHourglass" then
+	    		game.cast("self", i)
+	    	end
+        end
 	end
 end
 
