@@ -11,7 +11,7 @@ local gpred = module.internal("pred")
 local enemies = common.GetEnemyHeroes()
 
 local qPred = { delay = 0.25, width = 80, speed = 1500, boundingRadiusMod = 1, collision = { hero = false, minion = false } }
-local ePred = { delay = 0.25, width = 50, speed = 1550, boundingRadiusMod = 1, collision = { hero = true, minion = true } }
+local ePred = { delay = 0.25, width = 55, speed = 1550, boundingRadiusMod = 1, collision = { hero = true, minion = true } }
 
 local igniteDmg = { 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310, 330, 350, 370, 390, 410 } --"50 + (20 * myHero.level)"
 local igniteSlot = nil
