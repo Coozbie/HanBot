@@ -1,4 +1,4 @@
-local version = "1.3"
+local version = "1.4"
 
 local alib = module.load("avada_lib")
 local common = alib.common
@@ -30,7 +30,7 @@ local menu = menuconfig("ahrigod", "Cyrex Ahri")
 		menu.keys:keybind("harass", "Harass Key", "C", false)
 		menu.keys:keybind("clear", "Clear Key", "V", false)
 		menu.keys:keybind("StartE", "Start Combo With E", false)
-		--menu.keys:keybind("getcd", "Get Player CD", "T", false)
+		menu.keys:keybind("getcd", "Get Player CD", "T", false)
 	menu:menu("combo", "Combo Settings")
 		menu.combo:header("xd", "Combo Settings")
 		menu.combo:boolean("q", "Use Q", true)
@@ -182,7 +182,7 @@ end--]]
 function AutoIgnite()
 	for i, enemy in ipairs(enemies) do
         if common.IsValidTarget(enemy) and common.GetDistance(player, enemy) <= 600 then
-            if menu.auto.Ignite:get() and common.CanUseSpell(igniteSlot) and igniteDmg[player.level] > enemy.health then game.cast("obj", igniteSlot, enemy) end
+            if not player.isDead and igniteSlot and menu.auto.Ignite:get() and common.CanUseSpell(igniteSlot) and igniteDmg[player.level] > enemy.health then game.cast("obj", igniteSlot, enemy) end
         end
     end
 end
@@ -208,17 +208,17 @@ function CountEnemyHeroInRange(range)
 	return count 
 end
 
---[[
+
 function CD()
 	if menu.keys.getcd:get() then
-		print(player.percentCooldownMod)
+		print(player:spellslot(4).name)
 	end
 end
 
 function CooldownReduction(damageSource)
     local damageSource = damageSource or player
     return damageSource.CooldownMod
-end]]--
+end
 
 
 function OnDraw()
