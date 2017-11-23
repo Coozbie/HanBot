@@ -1,4 +1,4 @@
-local version = "1.0"
+local version = "1.1"
 
 local alib = module.load("avada_lib")
 local common = alib.common
@@ -11,7 +11,7 @@ local gpred = module.internal("pred")
 local enemies = common.GetEnemyHeroes()
 local ally = common.GetAllyHeroes()
 
-local qPred = { delay = 0.7, radius = 140, speed = math.huge, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
+local qPred = { delay = 0.7, radius = 130, speed = math.huge, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
 
 local igniteDmg = { 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310, 330, 350, 370, 390, 410 } --"50 + (20 * myHero.level)"
 local QlvlDmg = {75, 115, 165, 230, 300}
@@ -92,7 +92,7 @@ local menu = menuconfig("zilean", "Cyrex Zilean")
 		menu.draws:header("xd", "Drawing Options")
 		menu.draws:boolean("q", "Draw Q Range", true)
 		menu.draws:boolean("e", "Draw R Range", true)
-	menu:header("version", "Version: 1.0")
+	menu:header("version", "Version: 1.1")
 	menu:header("author", "Author: Coozbie")
 
 function OnTick()
@@ -188,7 +188,7 @@ end
 function CastQ(target)
 	if common.CanUseSpell(0) then
 		local res = gpred.circular.get_prediction(qPred, target)
-		if res and res.startPos:dist(res.endPos) < 880 then
+		if res and res.startPos:dist(res.endPos) < 900 then
 			game.cast("pos", 0, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
 		end
 	end
@@ -219,7 +219,7 @@ function QWQ(target)
 			if not common.CanUseSpell(1) then
 				for i, enemy in ipairs (enemies) do
 			    	if enemy and not enemy.isDead and common.IsValidTarget(enemy) and common.HasBuff(enemy, "ZileanQEnemyBomb") then
-				    	CastQ(target)
+				    	CastQ(enemy)
 				    	QWQCast = true
 					end
 				end
@@ -257,7 +257,7 @@ end
 function AutoIgnite()
 	for i, enemy in ipairs(enemies) do
         if common.IsValidTarget(enemy) and common.GetDistance(player, enemy) <= 600 then
-            if menu.auto.Ignite:get() and common.CanUseSpell(igniteSlot) and igniteDmg[player.level] > enemy.health then game.cast("obj", igniteSlot, enemy) end
+            if menu.auto.Ignite:get() and igniteSlot and common.CanUseSpell(igniteSlot) and igniteDmg[player.level] > enemy.health then game.cast("obj", igniteSlot, enemy) end
         end
     end
 end
