@@ -30,7 +30,7 @@ local menu = menuconfig("ahrigod", "Cyrex Ahri")
 		menu.keys:keybind("harass", "Harass Key", "C", false)
 		menu.keys:keybind("clear", "Clear Key", "V", false)
 		menu.keys:keybind("StartE", "Start Combo With E", false)
-		menu.keys:keybind("getcd", "Get Player CD", "T", false)
+		--menu.keys:keybind("getcd", "Get Player CD", "T", false)
 	menu:menu("combo", "Combo Settings")
 		menu.combo:header("xd", "Combo Settings")
 		menu.combo:boolean("q", "Use Q", true)
@@ -66,7 +66,7 @@ local menu = menuconfig("ahrigod", "Cyrex Ahri")
 		menu.draws:header("xd", "Drawing Options")
 		menu.draws:boolean("q", "Draw Q Range", true)
 		menu.draws:boolean("e", "Draw R Range", true)
-	menu:header("version", "Version: 1.3")
+	menu:header("version", "Version: 1.4")
 	menu:header("author", "Author: Coozbie")
 
 function OnTick()
@@ -198,6 +198,7 @@ end
 	end
 end--]]
 
+
 function CountEnemyHeroInRange(range)
 	local range, count = range*range, 0 
 	for i = 0, objmanager.enemies_n - 1 do
@@ -209,17 +210,12 @@ function CountEnemyHeroInRange(range)
 end
 
 
-function CD()
+--[[function CD()
 	if menu.keys.getcd:get() then
 		print(player:spellslot(4).name)
 	end
 end
-
-function CooldownReduction(damageSource)
-    local damageSource = damageSource or player
-    return damageSource.CooldownMod
-end
-
+]]--
 
 function OnDraw()
 	if menu.draws.q:get() then
