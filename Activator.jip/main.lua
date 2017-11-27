@@ -1,4 +1,4 @@
-local version = "1.0"
+local version = "1.01"
 
 local alib = module.load("avada_lib")
 local orb = module.internal("orb")
@@ -200,7 +200,7 @@ local menu = menuconfig("activator", "Activator")
 		menu.draws:boolean("ignite", "Draw Ignite Range", true)
 	    end
 
-	    menu:header("xd", "Version: 1.0")
+	    menu:header("xd", "Version: 1.01")
 	    menu:header("xd", "Author: Coozbie")
 	    menu:header("xd", "Credits: Avada Team")
 
