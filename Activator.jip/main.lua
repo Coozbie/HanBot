@@ -321,7 +321,7 @@ function AntiCC(typeName)
 	end
 	if cleanseSlot then
 		if menu.itemd.qssop.usecle:get() and useCleanse and typeName ~= "Suppression" then
-			game.cast("self", cleanseSlot)
+			common.DelayAction(function() game.cast("self", cleanseSlot) end, 0.3)
 		end
 	end
 end
@@ -334,6 +334,7 @@ function Combo()
 		end		
 	end
 	Shields()
+	ShieldAlly()
 end
 
 function DebuffEn()
@@ -356,59 +357,61 @@ function DebuffEn()
 end
 
 function Shields()
-	if menu.itemd.def.zhonya:get() and CountEnemyHeroInRange(700) >= 1 and common.GetPercentHealth(player) <= menu.itemd.def.itemhp:get() then
-		for i = 6, 11 do
-	    	local item = player:spellslot(i).name
-	    	if item and item == "ZhonyasHourglass" or item == "Item2420" then
-	    		game.cast("self", i)
-	    	end
-        end
-    end
-    if menu.itemd.def.seraph:get() and common.GetPercentHealth(player) <=  menu.itemd.def.seraphx:get() and CountEnemyHeroInRange(600) >= 1 then
-		for i = 6, 11 do
-			local item = player:spellslot(i).name
-			if item and item == "ItemSeraphsEmbrace" then
-				game.cast("self", i)
+	if not player.isDead then
+		if menu.itemd.def.zhonya:get() and CountEnemyHeroInRange(700) >= 1 and common.GetPercentHealth(player) <= menu.itemd.def.itemhp:get() then
+			for i = 6, 11 do
+		    	local item = player:spellslot(i).name
+		    	if item and item == "ZhonyasHourglass" or item == "Item2420" then
+		    		game.cast("self", i)
+		    	end
+	        end
+	    end
+	    if menu.itemd.def.seraph:get() and common.GetPercentHealth(player) <=  menu.itemd.def.seraphx:get() and CountEnemyHeroInRange(600) >= 1 then
+			for i = 6, 11 do
+				local item = player:spellslot(i).name
+				if item and item == "ItemSeraphsEmbrace" then
+					game.cast("self", i)
+				end
 			end
 		end
-	end
-	if menu.itemd.def.bomb:get() and common.GetPercentHealth(player) <=  menu.itemd.def.bombx:get() and CountEnemyHeroInRange(600) >= 1 then
-		for i = 6, 11 do
-			local item = player:spellslot(i).name
-			if item and item == "HealthBomb" then
-				game.cast("obj", i, player)
+		if menu.itemd.def.bomb:get() and common.GetPercentHealth(player) <=  menu.itemd.def.bombx:get() and CountEnemyHeroInRange(600) >= 1 then
+			for i = 6, 11 do
+				local item = player:spellslot(i).name
+				if item and item == "HealthBomb" then
+					game.cast("obj", i, player)
+				end
 			end
 		end
-	end
-	if menu.itemd.def.gs:get() and common.GetPercentHealth(player) <=  menu.itemd.def.gsx:get() and CountEnemyHeroInRange(600) >= menu.itemd.def.gsx2:get() then
-		for i = 6, 11 do
-			local item = player:spellslot(i).name
-			if item and item == "Item3193Active" then
-				game.cast("self", i)
+		if menu.itemd.def.gs:get() and common.GetPercentHealth(player) <=  menu.itemd.def.gsx:get() and CountEnemyHeroInRange(600) >= menu.itemd.def.gsx2:get() then
+			for i = 6, 11 do
+				local item = player:spellslot(i).name
+				if item and item == "Item3193Active" then
+					game.cast("self", i)
+				end
 			end
 		end
-	end
-	if menu.itemd.buf.toa:get() and CountAllysInRange(500) >= menu.itemd.buf.toax:get() then
-		for i = 6, 11 do
-			local item = player:spellslot(i).name
-			if item and item == "ShurelyasCrest" then
-				game.cast("self", i)
+		if menu.itemd.buf.toa:get() and CountAllysInRange(500) >= menu.itemd.buf.toax:get() then
+			for i = 6, 11 do
+				local item = player:spellslot(i).name
+				if item and item == "ShurelyasCrest" then
+					game.cast("self", i)
+				end
 			end
 		end
-	end
-	if menu.itemd.buf.lois:get() and CountAllysInRange(500) >= menu.itemd.buf.loisx:get() and CountEnemyHeroInRange(1000) >= 1 then
-		for i = 6, 11 do
-			local item = player:spellslot(i).name
-			if item and item == "IronStylus" then
-				game.cast("self", i)
+		if menu.itemd.buf.lois:get() and CountAllysInRange(500) >= menu.itemd.buf.loisx:get() and CountEnemyHeroInRange(1000) >= 1 then
+			for i = 6, 11 do
+				local item = player:spellslot(i).name
+				if item and item == "IronStylus" then
+					game.cast("self", i)
+				end
 			end
 		end
-	end
-	if menu.itemd.buf.rg:get() and CountAllysInRange(500) >= menu.itemd.buf.rgx:get() and CountEnemyHeroInRange(1000) >= 1 then
-		for i = 6, 11 do
-			local item = player:spellslot(i).name
-			if item and item == "ItemRighteousGlory" then
-				game.cast("self", i)
+		if menu.itemd.buf.rg:get() and CountAllysInRange(500) >= menu.itemd.buf.rgx:get() and CountEnemyHeroInRange(1000) >= 1 then
+			for i = 6, 11 do
+				local item = player:spellslot(i).name
+				if item and item == "ItemRighteousGlory" then
+					game.cast("self", i)
+				end
 			end
 		end
 	end
