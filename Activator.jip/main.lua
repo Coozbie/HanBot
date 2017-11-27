@@ -178,7 +178,7 @@ local menu = menuconfig("activator", "Activator")
 		menu.sum:header("xd", "Heal")
 		menu.sum:menu("hs", "Heal Settings")
 			menu.sum.hs:boolean("uh", "Auto Heal", true)
-			menu.sum.hs:slider("percent", "HP % to Cast", 10, 1, 100, 1)
+			menu.sum.hs:slider("uhx", "HP % to Cast", 10, 1, 100, 1)
 		end
 
 		if igniteSlot then
@@ -191,7 +191,7 @@ local menu = menuconfig("activator", "Activator")
 		menu.sum:header("xd", "Barrier")
 		menu.sum:menu("bs", "Barrier Settings")
 			menu.sum.bs:boolean("ub", "Auto Barrier", true)
-			menu.sum.bs:slider("percent", "HP % to Cast", 10, 1, 100, 1)
+			menu.sum.bs:slider("ubx", "HP % to Cast", 10, 1, 100, 1)
 		end
 
 		if smiteSlot or igniteSlot then
@@ -234,7 +234,7 @@ function AutoSmite()
 			end
 		end
 		for i, enemy in ipairs(enemies) do
-        	if common.IsValidTarget(enemy) and common.GetDistance(player, enemy) <= 560 then
+        	if common.IsValidTarget(enemy) and player.path.serverPos:dist(enemy.path.serverPos) <= 560 then
             	if menu.sum.smite.ks:get() and smiteDmgKs[player.level] > enemy.health then game.cast("obj", smiteSlot, enemy) end
         	end
     	end
@@ -243,20 +243,20 @@ end
 
 function AutoIgnite()
 	for i, enemy in ipairs(enemies) do
-        if common.IsValidTarget(enemy) and common.GetDistance(player, enemy) <= 600 then
+        if common.IsValidTarget(enemy) and player.path.serverPos:dist(enemy.path.serverPos) <= 600 then
             if menu.sum.ign.Ignite:get() and igniteSlot and common.CanUseSpell(igniteSlot) and igniteDmg[player.level] > enemy.health then game.cast("obj", igniteSlot, enemy) end
         end
     end
 end
 
 function AutoHeal()
-	if not player.isDead and healSlot and menu.sum.heal.use:get() and common.CanUseSpell(healSlot) and player.health <= menu.sum.heal.percent:get() / 100 * player.maxHealth and CountEnemyHeroInRange(900) >= 1 then
+	if not player.isDead and healSlot and menu.sum.hs.uh:get() and common.CanUseSpell(healSlot) and player.health <= menu.sum.hs.uhx:get() / 100 * player.maxHealth and CountEnemyHeroInRange(900) >= 1 then
 		game.cast("self", healSlot)
 	end
 end
 
 function AutoBarrier()
-	if not player.isDead and menu.sum.barrier.use:get() and barrierSlot and common.CanUseSpell(barrierSlot) and player.health <= menu.sum.barrier.percent:get() / 100 * player.maxHealth and CountEnemyHeroInRange(900) >= 1 then
+	if not player.isDead and menu.sum.bs.ub:get() and barrierSlot and common.CanUseSpell(barrierSlot) and player.health <= menu.sum.bs.ubx:get() / 100 * player.maxHealth and CountEnemyHeroInRange(900) >= 1 then
 		game.cast("self", barrierSlot)
 	end
 end
@@ -345,7 +345,7 @@ function DebuffEn()
   			end
 		end
     end
-    if menu.itemd.apd.frost:get() and CountEnemyHeroInRange(1000) >= menu.itemd.apd.frostx:get() and common.GetDistance(player, orb.combat.target) > 700 then
+    if menu.itemd.apd.frost:get() and CountEnemyHeroInRange(1000) >= menu.itemd.apd.frostx:get() and player.path.serverPos:dist(orb.combat.target.path.serverPos) < 700 then
 		for i = 6, 11 do
 			local item = player:spellslot(i).name
 			if item and item == "ItemGlacialSpikeCast" or item == "ItemWraithCollar" then
@@ -417,7 +417,7 @@ end
 function CastItems()
     if common.IsValidTarget(orb.combat.target) then
 		if menu.itemo.ado.bwc:get() then
-			if common.GetPercentHealth(orb.combat.target) <= menu.itemo.ado.bwcathp:get() and common.GetDistance(player, orb.combat.target) <= 550 then
+			if common.GetPercentHealth(orb.combat.target) <= menu.itemo.ado.bwcathp:get() and player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 550 then
 				for i = 6, 11 do
 	  				local item = player:spellslot(i).name
 	  				if item and (item == 'BilgewaterCutlass') then
@@ -427,7 +427,7 @@ function CastItems()
 			end
 		end
 		if menu.itemo.ado.botrk:get() then
-			if common.GetPercentHealth(orb.combat.target) <= menu.itemo.ado.botrkathp:get() and common.GetDistance(player, orb.combat.target) <= 550 then
+			if common.GetPercentHealth(orb.combat.target) <= menu.itemo.ado.botrkathp:get() and player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 550 then
 				for i = 6, 11 do
 	  				local item = player:spellslot(i).name
 	  				if item and (item == 'ItemSwordOfFeastAndFamine') then
@@ -437,7 +437,7 @@ function CastItems()
 			end
 		end
 		if menu.itemo.ado.tiamat:get() then
-			if common.GetDistance(player, orb.combat.target) <= 300 then
+			if player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 300 then
 				for i = 6, 11 do
 	  				local item = player:spellslot(i).name
 	  				if item and (item == 'ItemTiamatCleave') then
@@ -447,7 +447,7 @@ function CastItems()
 			end
 		end
 		if menu.itemo.ado.titanic:get() then
-			if common.GetDistance(player, orb.combat.target) <= 200 then
+			if player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 200 then
 				for i = 6, 11 do
 	  				local item = player:spellslot(i).name
 	  				if item and (item == "ItemTitanicHydraCleave" ) then
@@ -457,7 +457,7 @@ function CastItems()
 			end
 		end
 		if menu.itemo.apo.bwc:get() then
-			if common.GetPercentHealth(orb.combat.target) <= menu.itemo.apo.bwcathp:get() and common.GetDistance(player, orb.combat.target) <= 550 then
+			if common.GetPercentHealth(orb.combat.target) <= menu.itemo.apo.bwcathp:get() and player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 550 then
 				for i = 6, 11 do
 	  				local item = player:spellslot(i).name
 	  				if item and (item == 'BilgewaterCutlass') then
@@ -467,7 +467,7 @@ function CastItems()
 			end
 		end
 		if menu.itemo.apo.hex:get() then
-			if common.GetPercentHealth(orb.combat.target) <= menu.itemo.apo.hexathp:get() and common.GetDistance(player, orb.combat.target) <= 550 then
+			if common.GetPercentHealth(orb.combat.target) <= menu.itemo.apo.hexathp:get() and player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 700 then
 				for i = 6, 11 do
 	  				local item = player:spellslot(i).name
 	  				if item and (item == 'HextechGunblade') then
@@ -555,7 +555,6 @@ callback.add(enum.callback.recv.removebuff, function(buff, source) OnRemoveBuff(
 callback.add(enum.callback.recv.updatebuff, function(buff, source) OnUpdateBuff(buff, source) end)
 
 print("Activator "..version..": Loaded")
-print(player:spellslot(4).name)
 
 --ItemWillBoltSpellBase (GLPHextech800)
 --Item3193Active (ArmaduraPetera)
