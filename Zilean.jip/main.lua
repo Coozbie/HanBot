@@ -111,7 +111,7 @@ function Combo()
 		if target and not target.isDead then
 			if menu.combo.mode:get() == 2 then
 				if menu.combo.q:get() and not menu.combo.w:get() then
-					CastQ(taret)
+					CastQ(target)
 				end
 				if menu.combo.q:get() and menu.combo.w:get() then
 					QWQ(target)
