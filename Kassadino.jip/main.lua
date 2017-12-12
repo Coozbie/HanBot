@@ -5,8 +5,8 @@ local common = alib.common
 local draw = alib.draw
 local ts = alib.targetSelector
 
-local orb = module.internal("orb")
-local gpred = module.internal("pred")
+local orb = module.internal("orb/main")
+local gpred = module.internal("pred/main")
 
 local enemies = common.GetEnemyHeroes()
 
@@ -117,7 +117,7 @@ end
 function CastE(target)
 	if common.CanUseSpell(2) then
 		local res = gpred.circular.get_prediction(ePred, target)
-		if res and res.startPos:dist(res.endPos) < 680 then
+		if res and res.startPos:dist(res.endPos) < 665 then
 			game.cast("pos", 2, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
 		end
 	end
@@ -140,25 +140,27 @@ end
 
 
 function KillSteal()
-	for i, enemy in ipairs(enemies) do
- 		if not enemy.isDead and enemy.isVisible and enemy.isTargetable and menu.auto.uks:get() and common.GetDistance(player, enemy) <= 1000 then
-  			if enemy.health < qDmg(enemy) and common.CanUseSpell(0) then
-	  			CastQ(enemy)
-   			elseif enemy.health < eDmg(enemy) and common.CanUseSpell(2) then 
-   				CastE(enemy) 
-   			elseif enemy.health < rDmg(enemy) and menu.auto.urks:get() and common.CanUseSpell(3) then
-   				CastR(enemy)
-   			elseif enemy.health < qDmg(enemy) + eDmg(enemy) and common.CanUseSpell(0) and common.CanUseSpell(2) then
-   				CastQ(enemy)
-   				CastE(enemy)
-   			elseif enemy.health < qDmg(enemy) + eDmg(enemy) + rDmg(enemy) and common.CanUseSpell(0) and common.CanUseSpell(2) and common.CanUseSpell(3) and menu.auto.urks:get() then
-   				CastR(enemy)
-   				CastQ(enemy)
-   				CastE(enemy)
-   			elseif enemy.health < qDmg(enemy) + eDmg(enemy) + rDmg(enemy) + wDmg(enemy) and menu.auto.urks:get() and common.CanUseSpell(3) then	
-   				CastR(enemy)
-   				CastQ(enemy)
-   				CastE(enemy)
+	for i, enemy in pairs(enemies) do
+ 		if not enemy.isDead and enemy.isVisible and enemy.isTargetable and menu.auto.uks:get() then
+ 			local hp = enemy.health;
+ 			if hp == 0 then return end
+  			if hp < qDmg(enemy) and common.CanUseSpell(0) then
+	  			CastQ(enemy);
+   			elseif hp < eDmg(enemy) and common.CanUseSpell(2) then 
+   				CastE(enemy); 
+   			elseif hp < rDmg(enemy) and menu.auto.urks:get() and common.CanUseSpell(3) then
+   				CastR(enemy);
+   			elseif hp < qDmg(enemy) + eDmg(enemy) and common.CanUseSpell(0) and common.CanUseSpell(2) then
+   				CastQ(enemy);
+   				CastE(enemy);
+   			elseif hp < qDmg(enemy) + eDmg(enemy) + rDmg(enemy) and common.CanUseSpell(0) and common.CanUseSpell(2) and common.CanUseSpell(3) and menu.auto.urks:get() then
+   				CastR(enemy);
+   				CastQ(enemy);
+   				CastE(enemy);
+   			elseif hp < qDmg(enemy) + eDmg(enemy) + rDmg(enemy) + wDmg(enemy) and menu.auto.urks:get() and common.CanUseSpell(3) then	
+   				CastR(enemy);
+   				CastQ(enemy);
+   				CastE(enemy);
    				if common.CanUseSpell(1) and common.GetDistance(player, enemy) <= 200 and not orb.core.can_attack() then
    					game.cast("self", 1)
    				end
@@ -189,22 +191,6 @@ function CountEnemyHeroInRange(range)
 end
 
 
-function OnUpdateBuff(buff, source)
-	if buff and buff.valid and buff.owner and buff.owner == player and source and source.type == enum.type.hero and source.team == enum.team.enemy then
-		if buff.name == "RiftWalk" and RSTACK >= 0 and RSTACK < 4 then
-			RSTACK = RSTACK + 1
-		end
-	end
-end
-
-function OnRemoveBuff(buff, source)
-	if buff and buff.valid and buff.owner and buff.owner == player and source and source.type == enum.type.hero and source.team == enum.team.enemy then
-		if buff.name == "RiftWalk" then
-			RSTACK = 0
-		end
-	end
-end
-
 --[Spyk Credits]--
 function qDmg(target)
 	local qDamage = CalcMagicDmg(target, QlvlDmg[player:spellslot(0).level] + player.flatMagicDamageMod * .7, player)
@@ -212,7 +198,7 @@ function qDmg(target)
 end
 
 function wDmg(target)
-	local wDamage = CalcMagicDmg(target, WlvlDmg[player:spellslot(1).level] + player.flatMagicDamageMod * .2, player)
+	local wDamage = CalcMagicDmg(target, WlvlDmg[player:spellslot(1).level] + player.flatMagicDamageMod * .7, player)
 	return wDamage
 end
 
@@ -222,7 +208,7 @@ function eDmg(target)
 end
 
 function rDmg(target)
-	local rDamage = CalcMagicDmg(target, RlvlDmg[player:spellslot(3).level] + player.flatMagicDamageMod * .25 + player.maxPar * .2) --+ (stacksDmg[RSTACK] + player.flatMagicDamageMod * .1 + player.maxPar * .1, player))
+	local rDamage = CalcMagicDmg(target, RlvlDmg[player:spellslot(3).level] + player.flatMagicDamageMod * .3 + player.maxPar * .2, player) --+ (stacksDmg[RSTACK] + player.flatMagicDamageMod * .1 + player.maxPar * .1, player))
 	return rDamage
 end
 
@@ -231,10 +217,10 @@ function CalcMagicDmg(target, amount, from)
 	local from = from or player or objmanager.player;
 	local target = target or orb.combat.target;
 	local amount = amount or 0;
-	local targetMR = target.magicResist * math.ceil(from.percentMagicPenetration) - from.flatMagicPenetration;
+	local targetMR = target.spellBlock * math.ceil(from.percentMagicPenetration) - from.flatMagicPenetration;
 	local dmgMul = 100 / (100 + targetMR);
 	if dmgMul < 0 then
-		dmgMul = 2 - (100 / (100 - magicResist));
+		dmgMul = 2 - (100 / (100 - targetMR));
 	end
 	amount = amount * dmgMul;
 	return math.floor(amount)
@@ -253,8 +239,5 @@ end
 
 callback.add(enum.callback.tick, function() OnTick() end)
 callback.add(enum.callback.draw, function() OnDraw() end)
-callback.add(enum.callback.recv.removebuff, function(buff, source) OnRemoveBuff(buff, source) end)
-callback.add(enum.callback.recv.updatebuff, function(buff, source) OnUpdateBuff(buff, source) end)
-
 
 print("Cyrex Kassadin v"..version..": Loaded")
