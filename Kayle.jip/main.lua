@@ -41,6 +41,9 @@ local menu = menuconfig("kayle", "Cyrex Kayle")
 	menu:menu("auto", "Automatic Settings")
 		menu.auto:header("xd", "KillSteal Settings")
 		menu.auto:boolean("uks", "Use Q Killsteal", true)
+		menu.auto:header("xd", "Healing Settings")
+		menu.auto:boolean("heal", "Use W to Heal", true)
+		menu.auto:slider("healx", "Min HP% to Heal", 70, 0, 100, 5)
 
 	menu:menu("draws", "Draw Settings")
 		menu.draws:header("xd", "Drawing Options")
@@ -55,18 +58,16 @@ function OnTick()
 	if menu.auto.uks:get() then KillSteal() end
 	if menu.keys.run:get() then Run() end
 	if menu.keys.ultself:get() and common.CanUseSpell(3) then game.cast("obj", 3, player) end
+	Auto()
 end
 
 function Combo()
 	if menu.keys.combo:get() then
-		if menu.combo.r:get() and CountEnemyHeroInRange(900) >= menu.combo.rx:get() and common.GetPercentHealth(player) <= menu.combo.rhp:get() then
-			CastR()
-		end
 		if menu.combo.q:get() then
 			CastQ(target)
 		end
 		if menu.combo.w:get() and GetDistance(target) >= 550 then
-			if player.par / player.maxPar * 100 >= menu.combo.wm:get() and common.GetPercentHealth(player) <= menu.combo.whp:get() then
+			if player.par / player.maxPar * 100 >= menu.combo.wm:get() and common.GetPercentHealth(player) >= menu.combo.whp:get() then
 				CastW()
 			end
 		end
@@ -98,7 +99,7 @@ end
 
 function CastW()
 	if common.CanUseSpell(1) then
-		game.cast("self", 1)
+		game.cast("obj", 1, player)
 	end
 end
 
@@ -129,6 +130,14 @@ function KillSteal()
 	end
 end
 
+function Auto()
+	if menu.auto.heal:get() and common.GetPercentHealth(player) <= menu.auto.healx:get() and CountEnemyHeroInRange(500) >= 1 then
+		CastW()
+	end
+	if menu.combo.r:get() and CountEnemyHeroInRange(900) >= menu.combo.rx:get() and common.GetPercentHealth(player) <= menu.combo.rhp:get() then
+		CastR()
+	end
+end
 
 function Run()
 	if menu.keys.run:get() then
