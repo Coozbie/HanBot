@@ -1,10 +1,11 @@
 local version = "1.01"
 
 local alib = module.load("avada_lib")
-local orb = module.internal("orb")
+local orb = module.internal("orb/main")
 local common = alib.common
 local draw = alib.draw
 local enemies = common.GetEnemyHeroes()
+local lantern = nil
 
 local smiteDmg = { 390, 410, 430, 450, 480, 510, 540, 570, 600, 640, 680, 720, 760, 800, 850, 900, 950, 1000 }
 local smiteDmgKs = {28, 36, 44, 52, 60, 68, 76, 84, 92, 100, 108, 116, 124, 132, 140, 148, 156, 164}
@@ -35,7 +36,6 @@ if player:spellslot(4).name == "SummonerBoost" then
 elseif player:spellslot(5).name == "SummonerBoost" then
 	cleanseSlot = 5
 end
-
 
 local igniteDmg = { 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310, 330, 350, 370, 390, 410 } --"50 + (20 * myHero.level)"
 local igniteSlot = nil
@@ -98,6 +98,9 @@ local menu = menuconfig("activator", "Activator")
 			menu.itemd.def:header("xd", "Face Of Mountain Settings")
 			menu.itemd.def:boolean("bomb", "Use Face Of Mountain", true)
 			menu.itemd.def:slider("bombx", "Use FoM if HP % <=", 10, 0, 100, 10)
+
+			menu.itemd.def:header("xd", "Thresh Lantern Settings")
+			menu.itemd.def:boolean("tl", "Grab Lantern ?", true)
 
 			menu.itemd.def:header("xd", "Gargoyle Stoneplate Settings")
 			menu.itemd.def:boolean("gs", "Use Stoneplate", true)
@@ -266,7 +269,7 @@ function OnUpdateBuff(buff, source)
 		if buff.name == "SummonerExhaust" and menu.itemd.qss.exh:get() then
 			AntiCC("Exhaust")
 		end
-		if buff.type == 5 and menu.itemd.qss.stun:get() then
+		if buff.type == 5 or buff.name == "LuxLightBinding" and menu.itemd.qss.stun:get() then
 			AntiCC("Stun")
 		end
 		if buff.type == 7 and menu.itemd.qss.silence:get() then
@@ -307,6 +310,22 @@ function OnRemoveBuff(buff, source)
 	end
 end
 
+function OnCreateObj(obj)
+	if obj and obj ~= nil and obj.valid and obj.team == enum.team.ally then
+		if obj.name == "ThreshLantern" then
+			lantern = obj
+		end
+	end
+end
+
+function OnDeleteObj(obj)
+	if obj and obj ~= nil and obj.valid and obj.team == enum.team.ally then
+		if obj.name == "ThreshLantern" then
+			lantern = nil
+		end
+	end
+end
+
 function AntiCC(typeName)
 	if menu.itemd.qssop.useqss:get() then
 		local useCleanse = true
@@ -321,7 +340,7 @@ function AntiCC(typeName)
 	end
 	if cleanseSlot then
 		if menu.itemd.qssop.usecle:get() and useCleanse and typeName ~= "Suppression" then
-			common.DelayAction(function() game.cast("self", cleanseSlot) end, 0.3)
+			game.cast("self", cleanseSlot)
 		end
 	end
 end
@@ -417,6 +436,8 @@ function Shields()
 	end
 end
 
+
+
 function CastItems()
     if common.IsValidTarget(orb.combat.target) then
 		if menu.itemo.ado.bwc:get() then
@@ -440,7 +461,7 @@ function CastItems()
 			end
 		end
 		if menu.itemo.ado.tiamat:get() then
-			if player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 300 then
+			if player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 300 and not orb.core.can_attack() then
 				for i = 6, 11 do
 	  				local item = player:spellslot(i).name
 	  				if item and (item == 'ItemTiamatCleave') then
@@ -450,7 +471,7 @@ function CastItems()
 			end
 		end
 		if menu.itemo.ado.titanic:get() then
-			if player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 200 then
+			if player.path.serverPos:dist(orb.combat.target.path.serverPos) <= player.attackRange + player.boundingRadius and not orb.core.can_attack() then
 				for i = 6, 11 do
 	  				local item = player:spellslot(i).name
 	  				if item and (item == "ItemTitanicHydraCleave" ) then
@@ -554,8 +575,9 @@ end
 
 callback.add(enum.callback.draw, function() OnDraw() end)
 callback.add(enum.callback.tick, function() OnTick() end)
-callback.add(enum.callback.recv.removebuff, function(buff, source) OnRemoveBuff(buff, source) end)
-callback.add(enum.callback.recv.updatebuff, function(buff, source) OnUpdateBuff(buff, source) end)
+	callback.add(enum.callback.recv.removebuff, function(buff, source) OnRemoveBuff(buff, source) end)
+	callback.add(enum.callback.recv.updatebuff, function(buff, source) OnUpdateBuff(buff, source) end)
+
 
 print("Activator "..version..": Loaded")
 
