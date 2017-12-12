@@ -1,17 +1,17 @@
-local version = "1.1"
+local version = "1.0"
 
 local alib = module.load("avada_lib")
 local common = alib.common
 local draw = alib.draw
 local ts = alib.targetSelector
 
-local orb = module.internal("orb")
-local gpred = module.internal("pred")
+local orb = module.internal("orb/main")
+local gpred = module.internal("pred/main")
 
 local enemies = common.GetEnemyHeroes()
 local ally = common.GetAllyHeroes()
 
-local qPred = { delay = 0.7, radius = 130, speed = math.huge, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
+local qPred = { delay = 0.7, radius = 120, speed = math.huge, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
 
 local igniteDmg = { 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310, 330, 350, 370, 390, 410 } --"50 + (20 * myHero.level)"
 local QlvlDmg = {75, 115, 165, 230, 300}
@@ -92,7 +92,7 @@ local menu = menuconfig("zilean", "Cyrex Zilean")
 		menu.draws:header("xd", "Drawing Options")
 		menu.draws:boolean("q", "Draw Q Range", true)
 		menu.draws:boolean("e", "Draw R Range", true)
-	menu:header("version", "Version: 1.1")
+	menu:header("version", "Version: 1.0")
 	menu:header("author", "Author: Coozbie")
 
 function OnTick()
@@ -133,7 +133,7 @@ function Combo()
 					end
 					for i, enemy in pairs (enemies) do
 		    			if enemy ~= target and common.GetDistance(player, enemy) < 400 then
-			    			CastSpell(_E, enemy)
+			    			game.cast("obj", 2, target)
 		    			end
 					end
 				end
@@ -173,7 +173,7 @@ function Harass()
 			local target = ts.target
 			if target and not target.isDead then
 				if menu.harass.q:get() and not menu.harass.w:get() then
-					CastQ(taret)
+					CastQ(target)
 				elseif menu.harass.q:get() and menu.harass.w:get() then
 					QWQ(target)
 				end
@@ -310,7 +310,7 @@ end
 
 --[Spyk Credits]--
 function qDmg(target)
-	local qDamage = CalcMagicDmg(target, 0.9 * QlvlDmg[player:spellslot(0).level] + player.flatMagicDamageMod * .5 + player.flatPhysicalDamageMod * .5, player)
+	local qDamage = CalcMagicDmg(target, 0.9 * QlvlDmg[player:spellslot(0).level] + player.flatMagicDamageMod * .5, player)
 	return qDamage
 end
 
