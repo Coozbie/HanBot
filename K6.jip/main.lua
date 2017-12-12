@@ -163,17 +163,17 @@ function KillSteal()
 		if not enemy.isDead and enemy.isVisible and enemy.isTargetable and menu.auto.uks:get() then
 			local hp = enemy.health;
 			if hp == 0 then return end
-			if qDmg(enemy) > hp then
+			if player:spellslot(0).state == 0 and qDmg(enemy) > hp then
 				CastQ(enemy);
-			elseif wDmg(enemy) > hp then
+			elseif player:spellslot(1).state == 0 and wDmg(enemy) > hp then
 				CastW(enemy);
-			elseif wDmg(enemy) + qDmg(enemy) > hp then
+			elseif player:spellslot(1).state == 0 and player:spellslot(0).state == 0 and wDmg(enemy) + qDmg(enemy) > hp then
 				CastQ(enemy)
 				CastW(enemy)
-			elseif qDmg(enemy) + eDmg(enemy) > hp and menu.auto.ukse:get() then
+			elseif player:spellslot(2).state == 0 and player:spellslot(0).state == 0 and qDmg(enemy) + eDmg(enemy) > hp and menu.auto.ukse:get() then
 				CastE(enemy)
 				CastQ(enemy)
-			elseif qDmg(enemy) + eDmg(enemy) + wDmg(enemy) > hp and menu.auto.ukse:get() then
+			elseif player:spellslot(1).state == 0 and player:spellslot(0).state == 0 and player:spellslot(2).state == 0 and qDmg(enemy) + eDmg(enemy) + wDmg(enemy) > hp and menu.auto.ukse:get() then
 				CastE(enemy)
 				CastQ(enemy)
 				CastW(enemy)

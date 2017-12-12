@@ -144,24 +144,24 @@ function KillSteal()
  		if not enemy.isDead and enemy.isVisible and enemy.isTargetable and menu.auto.uks:get() then
  			local hp = enemy.health;
  			if hp == 0 then return end
-  			if hp < qDmg(enemy) and common.CanUseSpell(0) then
+  			if common.CanUseSpell(0) and hp < qDmg(enemy) then
 	  			CastQ(enemy);
-   			elseif hp < eDmg(enemy) and common.CanUseSpell(2) then 
+   			elseif common.CanUseSpell(2) and hp < eDmg(enemy) then 
    				CastE(enemy); 
-   			elseif hp < rDmg(enemy) and menu.auto.urks:get() and common.CanUseSpell(3) then
+   			elseif common.CanUseSpell(3) and hp < rDmg(enemy) and menu.auto.urks:get() then
    				CastR(enemy);
-   			elseif hp < qDmg(enemy) + eDmg(enemy) and common.CanUseSpell(0) and common.CanUseSpell(2) then
+   			elseif common.CanUseSpell(0) and common.CanUseSpell(2) and hp < qDmg(enemy) + eDmg(enemy) then
    				CastQ(enemy);
    				CastE(enemy);
-   			elseif hp < qDmg(enemy) + eDmg(enemy) + rDmg(enemy) and common.CanUseSpell(0) and common.CanUseSpell(2) and common.CanUseSpell(3) and menu.auto.urks:get() then
-   				CastR(enemy);
-   				CastQ(enemy);
-   				CastE(enemy);
-   			elseif hp < qDmg(enemy) + eDmg(enemy) + rDmg(enemy) + wDmg(enemy) and menu.auto.urks:get() and common.CanUseSpell(3) then	
+   			elseif common.CanUseSpell(0) and common.CanUseSpell(2) and common.CanUseSpell(3) and hp < qDmg(enemy) + eDmg(enemy) + rDmg(enemy) and menu.auto.urks:get() then
    				CastR(enemy);
    				CastQ(enemy);
    				CastE(enemy);
-   				if common.CanUseSpell(1) and common.GetDistance(player, enemy) <= 200 and not orb.core.can_attack() then
+   			elseif common.CanUseSpell(0) and common.CanUseSpell(2) and common.CanUseSpell(3) and common.CanUseSpell(1) hp < qDmg(enemy) + eDmg(enemy) + rDmg(enemy) + wDmg(enemy) and menu.auto.urks:get() then	
+   				CastR(enemy);
+   				CastQ(enemy);
+   				CastE(enemy);
+   				if common.GetDistance(player, enemy) <= 200 and not orb.core.can_attack() then
    					game.cast("self", 1)
    				end
    			end

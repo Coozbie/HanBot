@@ -123,7 +123,7 @@ function KillSteal()
 		if not enemy.isDead and enemy.isVisible and enemy.isTargetable and menu.auto.uks:get() then
 			local hp = enemy.health;
 			if hp == 0 then return end
-			if qDmg(enemy) > hp then
+			if player:spellslot(0).state == 0 and qDmg(enemy) > hp then
 				CastQ(enemy);
 			end
 		end
