@@ -4,7 +4,7 @@ local alib = module.load("avada_lib")
 local orb = module.internal("orb/main")
 local common = alib.common
 local draw = alib.draw
-local enemies = common.GetEnemyHeroes()
+local allies, enemies = common.GetAllyHeroes(), common.GetEnemyHeroes()
 local lantern = nil
 
 local smiteDmg = { 390, 410, 430, 450, 480, 510, 540, 570, 600, 640, 680, 720, 760, 800, 850, 900, 950, 1000 }
@@ -296,7 +296,7 @@ function OnUpdateBuff(buff, source)
 		if buff.type == 29 and menu.itemd.qss.knock:get() then
 			AntiCC("KnockUp")
 		end
-		if buff.name == "RegenerationPotion" or buff.name == "ItemMiniRegenPotion" or buff.name == "ItemCrystalFlask" then
+		if buff.name == "RegenerationPotion" or buff.name == "ItemMiniRegenPotion" or buff.name == "ItemCrystalFlask" or buff.name == "ItemDarkCrystalFlask" then
 			potionOn = true
 		end
 	end
@@ -304,7 +304,7 @@ end
 
 function OnRemoveBuff(buff, source)
 	if buff and buff.valid and buff.owner and buff.owner == player and source and source.type == enum.type.hero and source.team == enum.team.enemy then
-		if buff.name == "RegenerationPotion" or buff.name == "ItemMiniRegenPotion" or buff.name == "ItemCrystalFlask" then
+		if buff.name == "RegenerationPotion" or buff.name == "ItemMiniRegenPotion" or buff.name == "ItemCrystalFlask" or buff.name == "ItemDarkCrystalFlask" then
 			potionOn = false
 		end
 	end
@@ -519,15 +519,16 @@ function ShieldAlly()
 	end
 end
 
+
 local lastPotion = 0
 function UsePotion()
-	if os.clock() - lastPotion < 8 then return end
+	if os.clock() - lastPotion < 11 then return end
 	if not menu.pot.enemy:get() then
 		if CountEnemyHeroInRange(750) == 0 then return end
 	end
 	for i = 6, 11 do
 		local item = player:spellslot(i).name
-		if item and item == "RegenerationPotion" or item == "ItemMiniRegenPotion" or item == "ItemCrystalFlask" then
+		if item and item == "RegenerationPotion" or item == "ItemMiniRegenPotion" or item == "ItemCrystalFlask" or item == "ItemDarkCrystalFlask" then
 			game.cast("self", i)
 			lastPotion = os.clock()
 		end
@@ -568,16 +569,15 @@ function OnDraw()
 		glx.world.circle(player.pos, 560, 1, draw.color.gold, 50)
 	end
 	if igniteSlot and common.CanUseSpell(igniteSlot) and menu.draws.ignite:get() then
-		glx.world.circle(player.pos, 600, 1, draw.color.gold, 50)
+		glx.world.circle(player.pos, 600, 1, draw.color.red, 50)
 	end
 end
 
 
 callback.add(enum.callback.draw, function() OnDraw() end)
 callback.add(enum.callback.tick, function() OnTick() end)
-	callback.add(enum.callback.recv.removebuff, function(buff, source) OnRemoveBuff(buff, source) end)
-	callback.add(enum.callback.recv.updatebuff, function(buff, source) OnUpdateBuff(buff, source) end)
-
+callback.add(enum.callback.recv.removebuff, OnRemoveBuff)
+callback.add(enum.callback.recv.updatebuff, OnUpdateBuff)
 
 print("Activator "..version..": Loaded")
 
