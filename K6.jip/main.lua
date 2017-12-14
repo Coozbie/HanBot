@@ -1,4 +1,4 @@
-local version = "1.0"
+local version = "1.01"
 
 local alib = module.load("avada_lib")
 local common = alib.common
@@ -11,6 +11,7 @@ local QlvlDmg = {65, 90, 115, 140, 165}
 local WlvlDmg = {85, 115, 145, 165, 205}
 local ElvlDmg = {65, 100, 135, 170, 205}
 local QRange, ERange = 0, 0
+local Isolated = false
 
 local ePred = { delay = 0.25, radius = 300, speed = 1500, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
 local wPred = { delay = 0.25, width = 70, speed = 1700, boundingRadiusMod = 1, collision = { hero = true, minion = true } }
@@ -51,7 +52,7 @@ local menu = menuconfig("k6", "Khantum Phyzix")
 		menu.draws:header("xd", "Drawing Options")
 		menu.draws:boolean("q", "Draw Q Range", true)
 		menu.draws:boolean("e", "Draw E Range", true)
-	menu:header("version", "Version: 1.0")
+	menu:header("version", "Version: 1.01")
 	menu:header("author", "Author: Coozbie")
 
 function OnTick()
@@ -70,19 +71,21 @@ function Combo()
 				if common.CanUseSpell(2) and common.GetDistance(player, target) <= 700 then
 					common.DelayAction(function()game.cast("pos", 2, vec3(game.mousePos)) end, 0.2)
 				end
-			elseif menu.combo.ed:get() == 2 then
+			elseif menu.combo.ed:get() == 2 and GetDistance(target) >= 560 then
 				CastE(target)
 			end
 		end
 		if menu.combo.q:get() then
 			CastQ(target)
 		end
-		if menu.combo.w:get() then
+		if menu.combo.w:get() and GetDistance(target) >= 560 then
+			CastW(target)
+		elseif menu.combo.w:get() and Isolated == true or not common.CanUseSpell(0) then
 			CastW(target)
 		end
-		if menu.combo.r:get() then
+		if menu.combo.r:get() and common.CanUseSpell(3) then
 			if menu.combo.rm:get() == 2 then
-				if target.health <= ((qDmg(target)*2) + wDmg(target) + eDmg(target)) and target.health > (wDmg(target) + eDmg(target)) then
+				if player:spellslot(1).state == 0 and player:spellslot(0).state == 0 and player:spellslot(2).state == 0 and target.health <= ((qDmg(target)*2) + wDmg(target) + eDmg(target)) and target.health > (wDmg(target) + eDmg(target)) then
 	                if GetDistance(target) <= 900 then
 	                    if common.CanUseSpell(2) then CastR(target) end
 	                end
@@ -203,7 +206,26 @@ function EvolutionCheck()
     elseif player:spellslot(2).name == "KhazixELong" then
     	ERange = 900
     end 
-end 
+end
+
+function oncreateobj(obj)
+    if obj and obj.name and obj.type then
+        --if obj and obj.name and obj.name:lower():find("indicator") then print("Created "..obj.name) end
+        if obj.name:find("SingleEnemy_Indicator") then
+            Isolated = true
+        end
+    end
+end
+
+function ondeleteobj(obj)
+    if obj and obj.name and obj.type then
+    	if obj.name:find("SingleEnemy_Indicator") then
+            Isolated = false
+        end
+    end
+end
+
+
 
 --[Spyk Credits]--
 function qDmg(target)
@@ -302,5 +324,7 @@ end
 
 callback.add(enum.callback.tick, function() OnTick() end)
 callback.add(enum.callback.draw, function() OnDraw() end)
+callback.add(enum.callback.recv.createobj, oncreateobj)
+callback.add(enum.callback.recv.deleteobj, ondeleteobj)
 
 print("Khantum Phyzix v"..version..": Loaded")
