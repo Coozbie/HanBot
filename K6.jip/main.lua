@@ -10,6 +10,7 @@ local gpred = module.internal("pred/main")
 local QlvlDmg = {65, 90, 115, 140, 165}
 local WlvlDmg = {85, 115, 145, 165, 205}
 local ElvlDmg = {65, 100, 135, 170, 205}
+local IsoDmg = {14, 22, 30, 38, 46, 54, 62, 70, 78, 86, 94, 102, 110, 118, 126, 134, 142, 150}
 local QRange, ERange = 0, 0
 local Isolated = false
 
@@ -32,6 +33,7 @@ local menu = menuconfig("k6", "Khantum Phyzix")
 		menu.combo:boolean("w", "Use W", true)
 		menu.combo:header("xd", "E Settings")
 		menu.combo:boolean("e", "Use E in Combo", false)
+		menu.combo:slider("ec", "Min Enemys to E ?", 2, 0, 5, 1)
 		menu.combo:dropdown("ed", "E Mode", 2, {"Mouse Pos", "With Prediction"})
 		menu.combo:header("xd", "R Settings")
 		menu.combo:boolean("r", "Use R", true)
@@ -47,6 +49,7 @@ local menu = menuconfig("k6", "Khantum Phyzix")
 		menu.auto:header("xd", "KillSteal Settings")
 		menu.auto:boolean("uks", "Use Smart Killsteal", true)
 		menu.auto:boolean("ukse", "Use E in Killsteal", false)
+		menu.auto:slider("mhp", "Min. HP to E: ", 30, 0, 100, 10)
 
 	menu:menu("draws", "Draw Settings")
 		menu.draws:header("xd", "Drawing Options")
@@ -66,12 +69,12 @@ end
 
 function Combo()
 	if menu.keys.combo:get() then
-		if menu.combo.e:get() and CountEnemyHeroInRange(900) < 2 then
+		if menu.combo.e:get() and CountEnemyHeroInRange(900) >= menu.combo.ec:get() then
 			if menu.combo.ed:get() == 1 then
 				if common.CanUseSpell(2) and common.GetDistance(player, target) <= 700 then
 					common.DelayAction(function()game.cast("pos", 2, vec3(game.mousePos)) end, 0.2)
 				end
-			elseif menu.combo.ed:get() == 2 and GetDistance(target) >= 560 then
+			elseif menu.combo.ed:get() == 2 then
 				CastE(target)
 			end
 		end
@@ -117,12 +120,12 @@ function CastE(target)
 	if common.CanUseSpell(2) then
 		if player:spellslot(2).name == "KhazixE" then
 			local res = gpred.circular.get_prediction(ePred, target)
-			if res and res.startPos:dist(res.endPos) < 600 then
+			if res and res.startPos:dist(res.endPos) < 600 and res.startPos:dist(res.endPos) > 325  then
 				game.cast("pos", 2, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
 			end
 		elseif player:spellslot(2).name == "KhazixELong" then
 			local res = gpred.circular.get_prediction(ePred, target)
-			if res and res.startPos:dist(res.endPos) < 900 then
+			if res and res.startPos:dist(res.endPos) < 900 and res.startPos:dist(res.endPos) > 400 then
 				game.cast("pos", 2, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
 			end
 		end
@@ -166,20 +169,22 @@ function KillSteal()
 		if not enemy.isDead and enemy.isVisible and enemy.isTargetable and menu.auto.uks:get() then
 			local hp = enemy.health;
 			if hp == 0 then return end
-			if player:spellslot(0).state == 0 and qDmg(enemy) > hp then
+			if player:spellslot(0).state == 0 and qDmg(enemy) + PlayerAD() > hp then
 				CastQ(enemy);
 			elseif player:spellslot(1).state == 0 and wDmg(enemy) > hp then
 				CastW(enemy);
 			elseif player:spellslot(1).state == 0 and player:spellslot(0).state == 0 and wDmg(enemy) + qDmg(enemy) > hp then
 				CastQ(enemy)
 				CastW(enemy)
-			elseif player:spellslot(2).state == 0 and player:spellslot(0).state == 0 and qDmg(enemy) + eDmg(enemy) > hp and menu.auto.ukse:get() then
+			elseif player:spellslot(2).state == 0 and player:spellslot(0).state == 0 and qDmg(enemy) + eDmg(enemy) + PlayerAD() > hp and menu.auto.ukse:get() and common.GetPercentHealth(player) >= menu.auto.mhp:get() then
 				CastE(enemy)
 				CastQ(enemy)
-			elseif player:spellslot(1).state == 0 and player:spellslot(0).state == 0 and player:spellslot(2).state == 0 and qDmg(enemy) + eDmg(enemy) + wDmg(enemy) > hp and menu.auto.ukse:get() then
+			elseif player:spellslot(1).state == 0 and player:spellslot(0).state == 0 and player:spellslot(2).state == 0 and qDmg(enemy) + eDmg(enemy) + wDmg(enemy) + PlayerAD() > hp and menu.auto.ukse:get() and common.GetPercentHealth(player) >= menu.auto.mhp:get() then
 				CastE(enemy)
 				CastQ(enemy)
-				CastW(enemy)
+				if GetDistance(target) <= 700 then
+					CastW(enemy)
+				end
 			end
 		end
 	end
@@ -229,18 +234,31 @@ end
 
 --[Spyk Credits]--
 function qDmg(target)
-	local qDamage = CalcADmg(target, QlvlDmg[player:spellslot(0).level] + player.flatPhysicalDamageMod * 1.6, player)
-	return qDamage
+	if Isolated == false then
+		local qDamage = CalcADmg(target, QlvlDmg[player:spellslot(0).level] + player.flatPhysicalDamageMod * 1.1, player)
+		return qDamage
+	else
+		local qDamage = CalcADmg(target, (QlvlDmg[player:spellslot(0).level] + player.flatPhysicalDamageMod * 1.1) * 0.65, player)
+		return qDamage
+	end
 end
 
 function wDmg(target)
-	local wDamage = CalcADmg(target, WlvlDmg[player:spellslot(1).level] + player.flatPhysicalDamageMod * 1.3, player)
+	local wDamage = CalcADmg(target, WlvlDmg[player:spellslot(1).level] + player.flatPhysicalDamageMod * 1, player)
 	return wDamage
 end
 
 function eDmg(target)
-	local eDamage = CalcADmg(target, ElvlDmg[player:spellslot(2).level] + player.flatPhysicalDamageMod * .8, player)
+	local eDamage = CalcADmg(target, ElvlDmg[player:spellslot(2).level] + player.flatPhysicalDamageMod * .2, player)
 	return eDamage
+end
+
+function PlayerAD()
+	if Isolated == false then
+    	return player.flatPhysicalDamageMod + player.baseAttackDamage
+    else
+    	return player.flatPhysicalDamageMod + player.baseAttackDamage + (IsoDmg[player.level] + player.flatPhysicalDamageMod * .4 )
+    end
 end
 
 function CountEnemyHeroInRange(range)
@@ -257,14 +275,12 @@ function CalcADmg(target, amount, from)
 	local from = from or player or objmanager.player;
 	local target = target or orb.combat.target;
 	local amount = amount or 0;
-	local targetD = target.armor * math.ceil(from.percentArmorPenetration) - from.flatArmorPenetration;
+	local targetD = target.armor * math.ceil(from.percentBonusArmorPenetration);
 	local dmgMul = 100 / (100 + targetD);
-	if dmgMul < 0 then
-		dmgMul = 2 - (100 / (100 - targetD));
-	end
 	amount = amount * dmgMul;
 	return math.floor(amount)
 end
+
 
 function GetDistance(p1, p2)
 	p2 = p2 or player;
