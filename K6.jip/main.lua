@@ -1,4 +1,4 @@
-local version = "1.01"
+local version = "1.02"
 
 local alib = module.load("avada_lib")
 local common = alib.common
@@ -55,7 +55,7 @@ local menu = menuconfig("k6", "Khantum Phyzix")
 		menu.draws:header("xd", "Drawing Options")
 		menu.draws:boolean("q", "Draw Q Range", true)
 		menu.draws:boolean("e", "Draw E Range", true)
-	menu:header("version", "Version: 1.01")
+	menu:header("version", "Version: 1.02")
 	menu:header("author", "Author: Coozbie")
 
 function OnTick()
@@ -182,7 +182,7 @@ function KillSteal()
 			elseif player:spellslot(1).state == 0 and player:spellslot(0).state == 0 and player:spellslot(2).state == 0 and qDmg(enemy) + eDmg(enemy) + wDmg(enemy) + PlayerAD() > hp and menu.auto.ukse:get() and common.GetPercentHealth(player) >= menu.auto.mhp:get() then
 				CastE(enemy)
 				CastQ(enemy)
-				if GetDistance(target) <= 700 then
+				if GetDistance(enemy) <= 700 then
 					CastW(enemy)
 				end
 			end
