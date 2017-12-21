@@ -218,7 +218,7 @@ function QWQ(target)
 			end
 			if not common.CanUseSpell(1) then
 				for i, enemy in ipairs (enemies) do
-			    	if enemy and not enemy.isDead and common.IsValidTarget(enemy) and common.HasBuff(enemy, "ZileanQEnemyBomb") then
+			    	if enemy and not enemy.isDead and common.IsValidTarget(enemy) then --and common.HasBuff(enemy, "ZileanQEnemyBomb") then
 				    	CastQ(enemy)
 				    	QWQCast = true
 					end
