@@ -17,9 +17,6 @@ local QlvlDmg = {65, 95, 125, 135, 185}
 local WlvlDmg = {40, 65, 90, 115, 140}
 local ElvlDmg = {80, 105, 130, 155, 180}
 local RlvlDmg = {80, 100, 120}
-local stacksDmg = {40, 50, 60}
-
-local RSTACK = 0
 
 local menu = menuconfig("kassadin", "Cyrex Kassadin")
 	ts = ts(menu, 700)
@@ -157,7 +154,7 @@ function KillSteal()
    				CastR(enemy);
    				CastQ(enemy);
    				CastE(enemy);
-   			elseif common.CanUseSpell(0) and common.CanUseSpell(2) and common.CanUseSpell(3) and common.CanUseSpell(1) hp < qDmg(enemy) + eDmg(enemy) + rDmg(enemy) + wDmg(enemy) and menu.auto.urks:get() then	
+   			elseif common.CanUseSpell(0) and common.CanUseSpell(2) and common.CanUseSpell(3) and common.CanUseSpell(1) and hp < qDmg(enemy) + eDmg(enemy) + rDmg(enemy) + wDmg(enemy) and menu.auto.urks:get() then	
    				CastR(enemy);
    				CastQ(enemy);
    				CastE(enemy);
