@@ -79,6 +79,7 @@ local menu = menuconfig("activator", "Activator")
 			menu.itemo.ado:header("xd", "Ruined King Settings")
 			menu.itemo.ado:boolean("botrk", "Use Ruined King", true)
 			menu.itemo.ado:slider("botrkathp", "Use if enemy health is below %", 60, 10, 100, 10)
+			menu.itemo.ado:slider("botrkatownhp", "Use if my health is below %", 60, 10, 100, 10)
 
 			menu.itemo.ado:header("xd", "Tiamat Settings")
 			menu.itemo.ado:boolean("tiamat", "Use Tiamat/Hydra", true)
@@ -451,7 +452,7 @@ function CastItems()
 			end
 		end
 		if menu.itemo.ado.botrk:get() then
-			if common.GetPercentHealth(orb.combat.target) <= menu.itemo.ado.botrkathp:get() and player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 550 then
+			if common.GetPercentHealth(orb.combat.target) <= menu.itemo.ado.botrkathp:get() or common.GetPercentHealth(player) <= menu.itemo.ado.botrkatownhp:get() and player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 550 then
 				for i = 6, 11 do
 	  				local item = player:spellslot(i).name
 	  				if item and (item == 'ItemSwordOfFeastAndFamine') then
