@@ -17,7 +17,7 @@ local EnemyCC = nil
 
 local qPred = { delay = 0.25, width = 70, speed = 1200, boundingRadiusMod = 1, collision = { hero = false, minion = true } }
 local ePred = { delay = 0.25, radius = 275, speed = 1300, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
-local rPred = { delay = 1, width = 170, speed = 1000, boundingRadiusMod = 1, collision = { hero = false, minion = false } }
+local rPred = { delay = 1, width = 180, speed = 1000, boundingRadiusMod = 1, collision = { hero = false, minion = false } }
 
 local menu = menuconfig("lux", "Cyrex Lux")
 	menu:header("script", "Cyrex Lux")
@@ -26,7 +26,6 @@ local menu = menuconfig("lux", "Cyrex Lux")
 		menu.keys:keybind("combo", "Combo Key", "Space", false)
 		menu.keys:keybind("harass", "Harass Key", "C", false)
 		menu.keys:keybind("clear", "Clear Key", "V", false)
-		menu.keys:keybind("StartQ", "Start Combo With Q", false)
 
 	menu:menu("combo", "Combo Settings")
 		menu.combo:header("xd", "Q Settings")
@@ -50,6 +49,7 @@ local menu = menuconfig("lux", "Cyrex Lux")
 	menu:menu("auto", "Automatic Settings")
 		menu.auto:header("xd", "KillSteal Settings")
 		menu.auto:boolean("uks", "Use Smart Killsteal", true)
+		menu.auto:boolean("uksr", "Use R in Killsteal", false)
 
 	menu:menu("draws", "Draw Settings")
 		menu.draws:header("xd", "Drawing Options")
@@ -67,15 +67,14 @@ end
 
 function Combo()
 	if menu.keys.combo:get() then
+		if menu.combo.e:get() then
+			CastE(target)
+		end
 		if menu.combo.q:get() and (gpred.collision.get_prediction(qPred, gpred.linear.get_prediction(qPred, target), target) == nil or table.getn(gpred.collision.get_prediction(qPred, gpred.linear.get_prediction(qPred, target), target)) == 1) then
 			CastQ(target)
 		end
-		if menu.keys.StartQ:get() and common.CanUseSpell(0) then return end
 		if menu.combo.w:get() and common.GetPercentHealth(player) <= menu.combo.wx:get() and CountEnemyHeroInRange(500) >= 1 then
 			game.cast("pos", 1, vec3(game.mousePos))
-		end
-		if menu.combo.e:get() then
-			CastE(target)
 		end
 		if menu.combo.r:get() then
 			if menu.combo.rc:get() and menu.combo.rh:get() then
@@ -148,21 +147,22 @@ function KillSteal()
 		if not enemy.isDead and enemy.isVisible and enemy.isTargetable and menu.auto.uks:get() then
 			local hp = enemy.health;
 			if hp == 0 then return end
-			if player:spellslot(0).state == 0 and qDmg(enemy) > hp and GetDistance(enemy) <= 1180 then
+			if player:spellslot(0).state == 0 and qDmg(enemy) > hp then
 				CastQ(enemy);
-			elseif player:spellslot(2).state == 0 and eDmg(enemy) > hp and GetDistance(enemy) <= 1100 then
+			elseif player:spellslot(2).state == 0 and eDmg(enemy) > hp then
 				CastE(enemy);
-			elseif player:spellslot(3).state == 0 and GetDistance(enemy) >= 1300 and rDmg(enemy) > hp then
-				CastR(enemy)
-			elseif player:spellslot(3).state == 0 and player:spellslot(0).state == 0 and GetDistance(enemy) <= 1180 and rDmg(enemy) + qDmg(enemy) > hp then
+			elseif player:spellslot(3).state == 0 and player:spellslot(0).state == 0 and menu.auto.uksr:get() and rDmg(enemy) + qDmg(enemy) > hp then
 				CastQ(enemy)
 				CastR(enemy)
-			elseif player:spellslot(2).state == 0 and player:spellslot(3).state == 0 and GetDistance(enemy) <= 1100 and rDmg(enemy) + eDmg(enemy) > hp then
+			elseif player:spellslot(2).state == 0 and player:spellslot(3).state == 0 and menu.auto.uksr:get() and rDmg(enemy) + eDmg(enemy) > hp then
 				CastE(enemy)
 				CastR(enemy)
-			elseif player:spellslot(3).state == 0 and player:spellslot(0).state == 0 and player:spellslot(2).state == 0 and GetDistance(enemy) <= 1180 and qDmg(enemy) + eDmg(enemy) + rDmg(enemy) > hp then
+			elseif player:spellslot(3).state == 0 and player:spellslot(0).state == 0 and player:spellslot(2).state == 0 and menu.auto.uksr:get() and qDmg(enemy) + eDmg(enemy) + rDmg(enemy) > hp then
 				CastE(enemy)
 				CastQ(enemy)
+				CastR(enemy)
+			end
+			if player:spellslot(3).state == 0 and rDmg(enemy) > hp and EnemyCC and menu.auto.uksr:get() then
 				CastR(enemy)
 			end
 		end

@@ -13,8 +13,8 @@ local RlvlDmg = {150, 250, 350}
 local RP, Darkin, KaynP = nil, nil, nil
 local AS = false
 
-local qPred = { delay = 0.15, radius = 0, speed = 500, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
-local wPred = { delay = 0.55, width = 100, speed = 500, boundingRadiusMod = 1, collision = { hero = false, minion = false } }
+local qPred = { delay = 0.25, radius = 270, speed = math.huge, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
+local wPred = { delay = 0.3, width = 100, speed = 1700, boundingRadiusMod = 1, collision = { hero = false, minion = false } }
 local w2Pred = { delay = 0.6, width = 100, speed = 500, boundingRadiusMod = 1, collision = { hero = false, minion = false } }
 
 local menu = menuconfig("kayn", "Cyrex Kayn")
@@ -110,7 +110,7 @@ end
 function CastQ(target)
 	if common.CanUseSpell(0) then
 		local res = gpred.circular.get_prediction(qPred, target)
-		if res and res.startPos:dist(res.endPos) < 560 then
+		if res and res.startPos:dist(res.endPos) < 460 then
 			game.cast("pos", 0, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
 		end
 	end
@@ -157,7 +157,7 @@ function KillSteal()
 				CastQ(enemy);
 			elseif player:spellslot(1).state == 0 and wDmg(enemy) > hp then
 				CastW(enemy);
-			elseif player:spellslot(3).state == 0 and rDmg(enemy) > hp then
+			elseif player:spellslot(3).state == 0 and menu.auto.ukse:get() and rDmg(enemy) > hp then
 				CastR(enemy);
 			elseif player:spellslot(1).state == 0 and player:spellslot(0).state == 0 and wDmg(enemy) + qDmg(enemy) > hp then
 				CastQ(enemy)

@@ -1,4 +1,4 @@
-local version = "1.0"
+local version = "1.1"
 
 local alib = module.load("avada_lib")
 local common = alib.common
@@ -11,7 +11,7 @@ local gpred = module.internal("pred/main")
 local enemies = common.GetEnemyHeroes()
 local ally = common.GetAllyHeroes()
 
-local qPred = { delay = 0.7, radius = 120, speed = math.huge, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
+local qPred = { delay = 0.7, radius = 75, speed = 2000, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
 
 local igniteDmg = { 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310, 330, 350, 370, 390, 410 } --"50 + (20 * myHero.level)"
 local QlvlDmg = {75, 115, 165, 230, 300}
@@ -37,7 +37,7 @@ local menu = menuconfig("zilean", "Cyrex Zilean")
 		menu.combo:header("xd", "Combo Settings")
 		menu.combo:dropdown("mode", "Choose Mode: ", 2, {"               AP Mid", "               Support"})
 		menu.combo:boolean("q", "Use Q", true)
-		menu.combo:boolean("w", "Use W for Double Q", true)
+		menu.combo:boolean("w", "Force QWQ", true)
 		menu.combo:boolean("e", "Smart E", true)
 
 		menu.combo:header("xd", "R Settings")
@@ -84,8 +84,6 @@ local menu = menuconfig("zilean", "Cyrex Zilean")
 			menu.auto.ks:boolean("ksq", "Use Q in Killsteal", true)
 			menu.auto.ks:boolean("ksqwq", "Use QWQ in Killsteal", true)
 
-
-
 	ts:addToMenu()
 
 	menu:menu("draws", "Draw Settings")
@@ -115,6 +113,8 @@ function Combo()
 				end
 				if menu.combo.q:get() and menu.combo.w:get() then
 					QWQ(target)
+				else
+					game.cast("self", 1)
 				end
 				if menu.combo.e:get() and CountAllysInRange(600) >= 1 and common.GetDistance(player, target) <= 600 and common.CanUseSpell(2) then
 					game.cast("obj", 2, target)
