@@ -1,4 +1,4 @@
-local version = "1.1"
+local version = "1.2"
 
 local alib = module.load("avada_lib")
 local common = alib.common
@@ -90,7 +90,7 @@ local menu = menuconfig("zilean", "Cyrex Zilean")
 		menu.draws:header("xd", "Drawing Options")
 		menu.draws:boolean("q", "Draw Q Range", true)
 		menu.draws:boolean("e", "Draw R Range", true)
-	menu:header("version", "Version: 1.0")
+	menu:header("version", "Version: 1.2")
 	menu:header("author", "Author: Coozbie")
 
 function OnTick()
@@ -244,10 +244,10 @@ end--]]
 function KillSteal()
 	for i, enemy in ipairs(enemies) do
  		if not enemy.isDead and enemy.isVisible and enemy.isTargetable and menu.auto.ks.uks:get() then
-  			if menu.auto.ks.ksq:get() and enemy.health < qDmg(enemy) then
+  			if menu.auto.ks.ksq:get() and player:spellslot(0).state == 0 and enemy.health < qDmg(enemy) then
 	  			CastQ(enemy)
 	  		end
-   			if menu.auto.ks.ksqwq:get() and enemy.health < 2 * qDmg(enemy) then 
+   			if menu.auto.ks.ksqwq:get() and player:spellslot(0).state == 0 and player:spellslot(1).state == 0 and enemy.health < 2 * qDmg(enemy) then 
    				QWQ(enemy) 
    			end
   		end
@@ -342,4 +342,4 @@ end
 callback.add(enum.callback.tick, function() OnTick() end)
 callback.add(enum.callback.draw, function() OnDraw() end)
 
-print("Cyrex Ahri v"..version..": Loaded")
+print("Cyrex Zilean v"..version..": Loaded")
