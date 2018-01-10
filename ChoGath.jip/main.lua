@@ -74,7 +74,7 @@ function Combo()
 		if menu.combo.e:get() and common.CanUseSpell(2) and GetDistance(target) <= 180 then
 			game.cast("self", 2)
 		end
-		if menu.combo.r:get() then
+		if menu.combo.r:get() and player:spellslot(3).state == 0 then
 			if target.health <= rDmg(target) then
                 CastR(target)
             end
