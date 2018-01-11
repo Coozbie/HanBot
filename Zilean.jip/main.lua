@@ -11,7 +11,7 @@ local gpred = module.internal("pred/main")
 local enemies = common.GetEnemyHeroes()
 local ally = common.GetAllyHeroes()
 
-local qPred = { delay = 0.7, radius = 75, speed = 2000, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
+local qPred = { delay = 0.3, radius = 100, speed = math.huge, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
 
 local igniteDmg = { 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310, 330, 350, 370, 390, 410 } --"50 + (20 * myHero.level)"
 local QlvlDmg = {75, 115, 165, 230, 300}
@@ -113,7 +113,7 @@ function Combo()
 				end
 				if menu.combo.q:get() and menu.combo.w:get() then
 					QWQ(target)
-				else
+				elseif not common.CanUseSpell(0) and not menu.combo.w:get() then
 					game.cast("self", 1)
 				end
 				if menu.combo.e:get() and CountAllysInRange(600) >= 1 and common.GetDistance(player, target) <= 600 and common.CanUseSpell(2) then
@@ -218,14 +218,14 @@ function QWQ(target)
 			end
 			if not common.CanUseSpell(1) then
 				for i, enemy in ipairs (enemies) do
-			    	if enemy and not enemy.isDead and common.IsValidTarget(enemy) then --and common.HasBuff(enemy, "ZileanQEnemyBomb") then
-				    	CastQ(enemy)
+			    	if enemy and not enemy.isDead and common.IsValidTarget(enemy) and common.GetBuff(enemy, "ZileanQEnemyBomb") then
+				    	common.DelayAction(function() CastQ(enemy) end, 0.3)
 				    	QWQCast = true
 					end
 				end
 			end
 		else
-			CastQ(target)
+			common.DelayAction(function() CastQ(target) end, 0.3)
 		end
 	elseif common.CanUseSpell(0) and common.CanUseSpell(1) then
 		QWQCast = false

@@ -69,7 +69,7 @@ end
 
 function Combo()
 	if menu.keys.combo:get() then
-		if menu.combo.e:get() and CountEnemyHeroInRange(900) >= menu.combo.ec:get() then
+		if menu.combo.e:get() and CountEnemyHeroInRange(900) <= menu.combo.ec:get() then
 			if menu.combo.ed:get() == 1 then
 				if common.CanUseSpell(2) and common.GetDistance(player, target) <= 700 then
 					common.DelayAction(function()game.cast("pos", 2, vec3(game.mousePos)) end, 0.2)
@@ -289,7 +289,7 @@ end
 
 function GetTarget(range)
 	range = range or 900;
-	if orb.combat.target and not orb.combat.target.isDead and orb.combat.target.isTargetable
+	if orb.combat.target and selector.valid_target(orb.combat.target) and not orb.combat.target.isDead and orb.combat.target.isTargetable
 	 and orb.combat.target.isInvulnerable and orb.combat.target.isMagicImmune and orb.combat.target.isVisible then
 		return orb.combat.target
 	else

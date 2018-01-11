@@ -47,6 +47,7 @@ local menu = menuconfig("jinx", "Cyrex Jinx")
 		menu.harass:header("xd", "Harass Settings")
 		menu.harass:boolean("q", "Use Q", true)
 		menu.harass:boolean("qr", "Swap Q for Range?", true)
+		menu.harass:boolean("qe", "Swap to Minigun if no target?", true)
 		menu.harass:boolean("w", "Use W", true)
 		menu.harass:slider("Mana", "Min. Mana Percent: ", 10, 0, 100, 10)
 
@@ -70,8 +71,8 @@ function OnTick()
 	if menu.keys.harass:get() and target then Harass() end
 	if menu.auto.uks:get() then KillSteal() end
 	if menu.keys.me:get() and target then Manual() end
-	if menu.combo.qe:get() and player:spellslot(0).state == 0 and #common.GetEnemyHeroesInRange(1000, player) == 0 and not MiniGun then game.cast("self", 0) end
 	if menu.auto.ae:get() then AutoE() end
+	if orb.cs.farm_is_active() and player:spellslot(0).state == 0 and not MiniGun then game.cast("self", 0) end
 	if not MiniGun and menu.combo.qm:get() then if common.CanUseSpell(0) and player.par / player.maxPar * 100 <= menu.combo.Mana:get() then game.cast("self", 0) end end
 end
 
@@ -86,12 +87,13 @@ function Combo()
 				end
 			elseif not MiniGun and menu.combo.qr:get() and GetDistance(target) <= 535 then
 				game.cast("self", 0)
-			end			
+			end	
+			if menu.combo.qe:get() and #common.GetEnemyHeroesInRange(800, player) == 0 and not MiniGun then game.cast("self", 0) end		
 		end
-		if menu.combo.w:get() and GetDistance(target) > common.GetAARange(player) then
+		if menu.combo.w:get() and GetDistance(target) > (QRange[player:spellslot(0).level] + 600) then
 			CastW(target)
 		end
-		if menu.combo.r:get() and player:spellslot(3).state == 0 and GetDistance(target) >= menu.combo.rr:get() and rDmg(target) > target.health then
+		if menu.combo.r:get() and player:spellslot(3).state == 0 and GetDistance(target) > menu.combo.rr:get() and rDmg(target) > target.health then
 			CastR(target)
 		end
 		WeirdR()
@@ -102,16 +104,17 @@ function Harass()
 	if menu.keys.harass:get() then
 		if player.par / player.maxPar * 100 >= menu.harass.Mana:get() then
 			if menu.harass.q:get() and common.CanUseSpell(0) then
-			if MiniGun then
-				if menu.harass.qr:get() and CountEnemyHeroInRange(525) == 0 and GetDistance(target) < (QRange[player:spellslot(0).level] + 600) then
-					if GetDistance(target) > 600 then
-						game.cast("self", 0)
+				if MiniGun then
+					if menu.harass.qr:get() and CountEnemyHeroInRange(525) == 0 and GetDistance(target) < (QRange[player:spellslot(0).level] + 600) then
+						if GetDistance(target) > 600 then
+							game.cast("self", 0)
+						end
 					end
-				end
-			elseif not MiniGun and menu.harass.qr:get() and GetDistance(target) <= 525 then
-				game.cast("self", 0)
-			end			
-		end
+				elseif not MiniGun and menu.harass.qr:get() and GetDistance(target) <= 525 then
+					game.cast("self", 0)
+				end	
+			if menu.harass.qe:get() and #common.GetEnemyHeroesInRange(800, player) == 0 and not MiniGun then game.cast("self", 0) end		
+			end
 			if menu.harass.w:get() and GetDistance(target) > 650 then
 				CastW(target)
 			end
@@ -276,7 +279,7 @@ end
 
 function GetTarget(range)
 	range = range or 1500;
-	if orb.combat.target and not orb.combat.target.isDead and orb.combat.target.isTargetable
+	if orb.combat.target and selector.valid_target(orb.combat.target) and not orb.combat.target.isDead and orb.combat.target.isTargetable
 	 and orb.combat.target.isInvulnerable and orb.combat.target.isMagicImmune and orb.combat.target.isVisible then
 		return orb.combat.target
 	else
@@ -318,7 +321,7 @@ end
 
 function OnDraw()
 	if menu.draws.q:get() and common.CanUseSpell(0) then
-		glx.world.circle(player.pos, common.GetAARange(player), 2, draw.color.purple, 100)
+		glx.world.circle(player.pos, (QRange[player:spellslot(0).level] + 600), 2, draw.color.purple, 100)
 	end
 	if menu.draws.r:get() and common.CanUseSpell(3) then
 		glx.world.circle(player.pos, menu.combo.rr:get(), 3, draw.color.blue, 100)

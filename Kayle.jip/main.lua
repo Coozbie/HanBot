@@ -184,7 +184,7 @@ end
 
 function GetTarget(range)
 	range = range or 900;
-	if orb.combat.target and not orb.combat.target.isDead and orb.combat.target.isTargetable
+	if orb.combat.target and selector.valid_target(orb.combat.target) and not orb.combat.target.isDead and orb.combat.target.isTargetable
 	 and orb.combat.target.isInvulnerable and orb.combat.target.isMagicImmune and orb.combat.target.isVisible then
 		return orb.combat.target
 	else

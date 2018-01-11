@@ -1,4 +1,4 @@
-local version = "1.0"
+local version = "1.1"
 
 local alib = module.load("avada_lib")
 local common = alib.common
@@ -12,7 +12,7 @@ local WlvlDmg = {75, 125, 175, 225, 275}
 local RlvlDmg = {300, 475, 650}
 local HPlvl = {574.4, 632, 692.4, 755.6, 821.6, 890.4, 962, 1036.4, 1113.6, 1193.6, 1276.4, 1362, 1450.4, 1541.6, 1635.6, 1732.4, 1832, 1934.4}
 
-local qPred = { delay = 1.2, radius = 125, speed = math.huge, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
+local qPred = { delay = 1.8, radius = 250, speed = math.huge, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
 local wPred = { delay = 0.25, radius = 80, speed = math.huge, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
 
 
@@ -51,7 +51,7 @@ local menu = menuconfig("cho", "Tasty Cho'Gath")
 		menu.draws:header("xd", "Drawing Options")
 		menu.draws:boolean("q", "Draw Q Range", true)
 		menu.draws:boolean("r", "Draw R Range", true)
-	menu:header("version", "Version: 1.0")
+	menu:header("version", "Version: 1.1")
 	menu:header("author", "Author: Coozbie")
 
 function OnTick()
@@ -61,6 +61,7 @@ function OnTick()
 	if menu.auto.uks:get() then KillSteal() end
 	if menu.keys.run:get() then Run() end
 end
+orb.combat.register_f_pre_tick(OnTick)
 
 function Combo()
 	if menu.keys.combo:get() then
@@ -96,7 +97,7 @@ function Harass()
 end
 
 function CastQ(target)
-	if common.CanUseSpell(0) then
+	if target and common.CanUseSpell(0) and player.path.serverPos:dist(target.path.serverPos) < 950 then
 		local res = gpred.circular.get_prediction(qPred, target)
 		if res and res.startPos:dist(res.endPos) < 950 then
 			game.cast("pos", 0, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
@@ -105,9 +106,9 @@ function CastQ(target)
 end
 
 function CastW(target)
-	if common.CanUseSpell(1) then
+	if common.CanUseSpell(1) and player.path.serverPos:dist(target.path.serverPos) < 650 then
 		local res = gpred.circular.get_prediction(wPred, target)
-		if res and res.startPos:dist(res.endPos) < 650 then
+		if res and res.startPos:dist(res.endPos) < 640 then
 			game.cast("pos", 1, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
 		end
 	end
@@ -200,7 +201,7 @@ end
 
 function GetTarget(range)
 	range = range or 900;
-	if orb.combat.target and not orb.combat.target.isDead and orb.combat.target.isTargetable
+	if orb.combat.target and selector.valid_target(orb.combat.target) and not orb.combat.target.isDead and orb.combat.target.isTargetable
 	 and orb.combat.target.isInvulnerable and orb.combat.target.isMagicImmune and orb.combat.target.isVisible then
 		return orb.combat.target
 	else
@@ -249,6 +250,6 @@ function OnDraw()
 	end
 end
 
-callback.add(enum.callback.tick, function() OnTick() end)
+--callback.add(enum.callback.tick, function() OnTick() end)
 callback.add(enum.callback.draw, function() OnDraw() end)
 print("Tasty Cho'Gath v"..version..": Loaded")

@@ -73,7 +73,7 @@ end
 function Combo()
 	if menu.keys.combo:get() then
 		local target = ts.target
-		if target and not target.isDead then
+		if target and selector.valid_target(orb.combat.target) and not target.isDead then
 			if menu.combo.e:get() then
 				if menu.combo.ed:get() == 1 then
 					if common.CanUseSpell(2) and common.GetDistance(player, target) <= 600 then
@@ -144,7 +144,7 @@ end
 
 function KillSteal()
 	for i, enemy in pairs(enemies) do
-		if not enemy.isDead and enemy.isVisible and enemy.isTargetable and menu.auto.uks:get() then
+		if not enemy.isDead and selector.valid_target(orb.combat.target) and enemy.isVisible and enemy.isTargetable and menu.auto.uks:get() then
 			local hp = enemy.health;
 			if hp == 0 then return end
 			if player:spellslot(0).state == 0 and qDmg(enemy) > hp then
