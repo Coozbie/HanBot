@@ -1,4 +1,4 @@
-local version = "1.0"
+local version = "1.1"
 
 local alib = module.load("avada_lib")
 local common = alib.common
@@ -16,7 +16,7 @@ local RlvlDmg = {250, 350, 450}
 local RB = {0.25, 0.3, 0.35}
 
 local wPred = { delay = 0.6, width = 60, speed = 3200, boundingRadiusMod = 1, collision = { hero = true, minion = true } }
-local ePred = { delay = 0.25, width = 50, speed = 1000, boundingRadiusMod = 1, collision = { hero = false, minion = false } }
+local ePred = { delay = 0.25, width = 30, speed = 1000, boundingRadiusMod = 1, collision = { hero = false, minion = false } }
 local rPred = { delay = 0.6, width = 120, speed = 1700, boundingRadiusMod = 1, collision = { hero = true, minion = false } }
 
 local menu = menuconfig("jinx", "Cyrex Jinx")
@@ -61,7 +61,7 @@ local menu = menuconfig("jinx", "Cyrex Jinx")
 		menu.draws:header("xd", "Drawing Options")
 		menu.draws:boolean("q", "Draw Q Range", true)
 		menu.draws:boolean("r", "Draw R Range", true)
-	menu:header("version", "Version: 1.0")
+	menu:header("version", "Version: 1.1")
 	menu:header("author", "Author: Coozbie")
 
 function OnTick()
@@ -70,14 +70,14 @@ function OnTick()
 	if menu.keys.harass:get() and target then Harass() end
 	if menu.auto.uks:get() then KillSteal() end
 	if menu.keys.me:get() and target then Manual() end
-	if menu.combo.qe:get() and #common.GetEnemyHeroesInRange(1000, player) == 0 and not MiniGun then game.cast("self", 0) end
+	if menu.combo.qe:get() and player:spellslot(0).state == 0 and #common.GetEnemyHeroesInRange(1000, player) == 0 and not MiniGun then game.cast("self", 0) end
 	if menu.auto.ae:get() then AutoE() end
 	if not MiniGun and menu.combo.qm:get() then if common.CanUseSpell(0) and player.par / player.maxPar * 100 <= menu.combo.Mana:get() then game.cast("self", 0) end end
 end
 
 function Combo()
 	if menu.keys.combo:get() then
-		if menu.combo.q:get() and common.CanUseSpell(0) and player.par / player.maxPar * 100 >= menu.combo.Mana:get() then
+		if menu.combo.q:get() and player:spellslot(0).state == 0 and player.par / player.maxPar * 100 >= menu.combo.Mana:get() then
 			if MiniGun then
 				if menu.combo.qr:get() and CountEnemyHeroInRange(525) == 0 and GetDistance(target) <= (QRange[player:spellslot(0).level] + 600) then
 					if GetDistance(target) > 600 then
@@ -195,9 +195,9 @@ end
 
 function OnUpdateBuff(buff, causer)
 	if buff and buff.valid and buff.owner and buff.owner.type == player.type and buff.owner.team == enum.team.enemy then
-		if buff.name == "SummonerExhaust" or buff.type == 5 or buff.type == 8 or buff.type == 11 or buff.type == 22 or buff.type == 24 or buff.type == 29 then
+		if buff.type == 5 or buff.type == 8 or buff.type == 11 or buff.type == 22 or buff.type == 24 or buff.type == 29 then
 			EnemyCC = true
-			AutoE()
+			common.DelayAction(function() AutoE() end, 0.5)
 		end
 	end
 	if buff and buff.valid and buff.owner and buff.owner == player then
@@ -210,7 +210,7 @@ end
 
 function OnRemoveBuff(buff, causer)
 	if buff and buff.valid and buff.owner and buff.owner.type == player.type and buff.owner.team == enum.team.enemy then
-		if buff.name == "SummonerExhaust" or buff.type == 5 or buff.type == 8 or buff.type == 11 or buff.type == 22 or buff.type == 24 or buff.type == 29 then
+		if buff.type == 5 or buff.type == 8 or buff.type == 11 or buff.type == 22 or buff.type == 24 or buff.type == 29 then
 			EnemyCC = false
 		end
 	end
@@ -330,4 +330,4 @@ callback.add(enum.callback.draw, function() OnDraw() end)
 callback.add(enum.callback.recv.removebuff, OnRemoveBuff)
 callback.add(enum.callback.recv.updatebuff, OnUpdateBuff)
 
-print("Khantum Phyzix v"..version..": Loaded")
+print("Cyrex Jinx v"..version..": Loaded")
