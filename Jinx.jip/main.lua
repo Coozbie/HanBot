@@ -156,7 +156,7 @@ function KillSteal()
 				CastW(enemy);
 			elseif player:spellslot(3).state == 0 and rDmg(enemy) > hp and menu.auto.ukse:get() and GetDistance(enemy) <= 3000 and GetDistance(enemy) > 1200 then
 				CastR(enemy);
-			elseif player:spellslot(3).state == 0 and player:spellslot(1).state == 0 and (wDmg(enemy) + rDmg(enemy) > hp) and menu.auto.ukse:get() and GetDistance(enemy) <= 1500 then
+			elseif player:spellslot(3).state == 0 and player:spellslot(1).state == 0 and (wDmg(enemy) + rDmg(enemy) > hp) and menu.auto.ukse:get() and GetDistance(enemy) < 1500 and GetDistance(enemy) > 800 then
 				CastR(enemy)
 				CastW(enemy)
 			end
@@ -321,10 +321,10 @@ end
 
 function OnDraw()
 	if menu.draws.q:get() and common.CanUseSpell(0) then
-		glx.world.circle(player.pos, (QRange[player:spellslot(0).level] + 600), 2, draw.color.purple, 100)
+		glx.world.circle(player.pos, common.GetAARange(player), 2, draw.color.purple, 100)
 	end
 	if menu.draws.r:get() and common.CanUseSpell(3) then
-		glx.world.circle(player.pos, menu.combo.rr:get(), 3, draw.color.blue, 100)
+		glx.world.circle(player.pos, menu.combo.rr:get(), 2, draw.color.blue, 100)
 	end
 end
 
