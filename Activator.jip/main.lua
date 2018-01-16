@@ -1,10 +1,11 @@
-local version = "1.01"
+local version = "1.02"
 
 local alib = module.load("avada_lib")
 local orb = module.internal("orb/main")
 local common = alib.common
 local draw = alib.draw
-local allies, enemies = common.GetAllyHeroes(), common.GetEnemyHeroes()
+local enemies = common.GetEnemyHeroes()
+local cAlly = common.GetAllyHeroes() 
 local lantern = nil
 
 local smiteDmg = { 390, 410, 430, 450, 480, 510, 540, 570, 600, 640, 680, 720, 760, 800, 850, 900, 950, 1000 }
@@ -58,6 +59,8 @@ local menu = menuconfig("activator", "Activator")
 		menu.pot:boolean("usep", "Use Health Pot", true)
 		menu.pot:boolean("enemy", "Use if no enemies", true)
 		menu.pot:slider("usepx", "Use if HP % <=", 10, 0, 100, 10)
+		menu.pot:header("xd", "Misc Items")
+		menu.pot:boolean("useg", "Use Cleptomaniac Gold", true)
 
 	menu:header("420", "Item Settings")
 	menu:menu("itemo", "Offensive Items")
@@ -70,6 +73,10 @@ local menu = menuconfig("activator", "Activator")
 			menu.itemo.apo:header("xd", "Bligewater Settings")
 			menu.itemo.apo:boolean("bwc", "Use Bligewater Cutlass", true)
 			menu.itemo.apo:slider("bwcathp", "Use if enemy health is below %", 60, 10, 100, 10)
+
+			menu.itemo.apo:header("xd", "Protobelt Settings")
+			menu.itemo.apo:boolean("pro", "Use Protobelt", true)
+			menu.itemo.apo:slider("proathp", "Use if enemy health is below %", 60, 10, 100, 10)
 
 		menu.itemo:menu("ado", "AD Items")
 			menu.itemo.ado:header("xd", "Bligewater Settings")
@@ -108,11 +115,16 @@ local menu = menuconfig("activator", "Activator")
 			menu.itemd.def:slider("gsx", "Use Stoneplate if HP % <=", 10, 0, 100, 10)
 			menu.itemd.def:slider("gsx2", "Enemys Near: ", 1, 0, 5, 1)
 
+	--menu:menu("wt", "Ward Bush Trick")
+		--menu.wt:header("xd", "Ward Enemy When He Hides")
+		--menu.wt:boolean("wbt", "Ward Bush On Loose Vision", true)
+
 		menu.itemd:header("xd", "Debuff Enemy")
 		menu.itemd:menu("apd", "Debuff Enemy Settings")
 			menu.itemd.apd:header("xd", "Randuin Settings")
 			menu.itemd.apd:boolean("rand", "Use Randuin Omen", true)
 			menu.itemd.apd:slider("randx", "Enemys Near: ", 1, 0, 5, 1)
+			menu.itemd.apd:slider("randhp", "Use Randuin if HP % <=", 60, 10, 100, 10)
 
 			menu.itemd.apd:header("xd", "Frost Queen Settings")
 			menu.itemd.apd:boolean("frost", "Use Frost Queen", true)
@@ -131,6 +143,7 @@ local menu = menuconfig("activator", "Activator")
 				menu.itemd.buf:header("xd", "Locket of Iron Solari Settings")
 				menu.itemd.buf:boolean("lois", "Use Locket", true)
 				menu.itemd.buf:slider("loisx", "Allies Near: ", 1, 0, 5, 1)
+				menu.itemd.buf:slider("loishp", "Use Solari if HP % <=", 60, 10, 100, 10)
 
 				menu.itemd.buf:header("xd", "Righteous Glory Settings")
 				menu.itemd.buf:boolean("rg", "Use Righteous Glory", true)
@@ -204,16 +217,15 @@ local menu = menuconfig("activator", "Activator")
 		menu.draws:boolean("ignite", "Draw Ignite Range", true)
 	    end
 
-	    menu:header("xd", "Version: 1.01")
+	    menu:header("xd", "Version: 1.02")
 	    menu:header("xd", "Author: Coozbie")
-	    menu:header("xd", "Credits: Avada Team")
 
 function AutoSmite()
 	if not player.isDead and smiteSlot and common.CanUseSpell(smiteSlot) then
 		for i = 0, objmanager.maxObjects - 1 do
 			local obj = objmanager.get(i)
 			if obj and obj.type == enum.type.minion and common.IsValidTarget(obj) and obj.team == enum.team.neutral and draw.GetDistance(obj, player) < 560 and obj.health <= smiteDmg[player.level] then
-				print(obj.charName)
+				--print(obj.charName)
 				if obj.charName == "SRU_Baron" then
 					if menu.sum.smite.baron:get() then
 						game.cast("obj", smiteSlot, obj)
@@ -238,7 +250,7 @@ function AutoSmite()
 			end
 		end
 		for i, enemy in ipairs(enemies) do
-        	if common.IsValidTarget(enemy) and player.path.serverPos:dist(enemy.path.serverPos) <= 560 then
+        	if common.IsValidTarget(enemy) and selector.is_valid(enemy) and player.path.serverPos:dist(enemy.path.serverPos) <= 560 then
             	if menu.sum.smite.ks:get() and smiteDmgKs[player.level] > enemy.health then game.cast("obj", smiteSlot, enemy) end
         	end
     	end
@@ -247,7 +259,7 @@ end
 
 function AutoIgnite()
 	for i, enemy in ipairs(enemies) do
-        if common.IsValidTarget(enemy) and player.path.serverPos:dist(enemy.path.serverPos) <= 600 then
+        if common.IsValidTarget(enemy) and selector.is_valid(enemy) and player.path.serverPos:dist(enemy.path.serverPos) <= 600 then
             if menu.sum.ign.Ignite:get() and igniteSlot and common.CanUseSpell(igniteSlot) and igniteDmg[player.level] > enemy.health then game.cast("obj", igniteSlot, enemy) end
         end
     end
@@ -297,35 +309,24 @@ function OnUpdateBuff(buff, source)
 		if buff.type == 29 and menu.itemd.qss.knock:get() then
 			AntiCC("KnockUp")
 		end
-		if buff.name == "RegenerationPotion" or buff.name == "ItemMiniRegenPotion" or buff.name == "ItemCrystalFlask" or buff.name == "ItemDarkCrystalFlask" then
+	end
+	if buff and buff.valid and buff.owner and buff.owner == player then
+		if buff.name == "RegenerationPotion" or buff.name == "ItemMiniRegenPotion" or buff.name == "ItemCrystalFlask" or buff.name == "ItemDarkCrystalFlask" or buff.name == "LootedRegenerationPotion" or buff.name == "Item2010" or buff.name == "ItemCrystalFlaskJungle" then
 			potionOn = true
+			print("true player")
 		end
 	end
 end
 
 function OnRemoveBuff(buff, source)
-	if buff and buff.valid and buff.owner and buff.owner == player and source and source.type == enum.type.hero and source.team == enum.team.enemy then
-		if buff.name == "RegenerationPotion" or buff.name == "ItemMiniRegenPotion" or buff.name == "ItemCrystalFlask" or buff.name == "ItemDarkCrystalFlask" then
+	if buff and buff.valid and buff.owner and buff.owner == player then
+		if buff.name == "RegenerationPotion" or buff.name == "ItemMiniRegenPotion" or buff.name == "ItemCrystalFlask" or buff.name == "ItemDarkCrystalFlask" or buff.name == "LootedRegenerationPotion" or buff.name == "Item2010" or buff.name == "ItemCrystalFlaskJungle" then
 			potionOn = false
+			print("false")
 		end
 	end
 end
 
-function OnCreateObj(obj)
-	if obj and obj ~= nil and obj.valid and obj.team == enum.team.ally then
-		if obj.name == "ThreshLantern" then
-			lantern = obj
-		end
-	end
-end
-
-function OnDeleteObj(obj)
-	if obj and obj ~= nil and obj.valid and obj.team == enum.team.ally then
-		if obj.name == "ThreshLantern" then
-			lantern = nil
-		end
-	end
-end
 
 function AntiCC(typeName)
 	if menu.itemd.qssop.useqss:get() then
@@ -348,17 +349,15 @@ end
 
 function Combo()
 	if menu.keys.combo:get() then
-		if orb.combat.target and not orb.combat.target.isDead then
-			DebuffEn()
-			CastItems()
-		end		
+		DebuffEn(target)
+		CastItems(target)	
 	end
 	Shields()
 	ShieldAlly()
 end
 
-function DebuffEn()
-	if menu.itemd.apd.rand:get() and CountEnemyHeroInRange(500) >= menu.itemd.apd.randx:get() and common.IsValidTarget(orb.combat.target) then
+function DebuffEn(target)
+	if menu.itemd.apd.rand:get() and CountEnemyHeroInRange(500) >= menu.itemd.apd.randx:get() and common.IsValidTarget(target) and common.GetPercentHealth(player) <= menu.itemd.apd.randhp:get() then
 		for i = 6, 11 do
   		local item = player:spellslot(i).name
   			if item and (item == 'RanduinsOmen') then
@@ -366,7 +365,7 @@ function DebuffEn()
   			end
 		end
     end
-    if menu.itemd.apd.frost:get() and CountEnemyHeroInRange(1000) >= menu.itemd.apd.frostx:get() and player.path.serverPos:dist(orb.combat.target.path.serverPos) < 700 then
+    if menu.itemd.apd.frost:get() and #common.GetEnemyHeroesInRange(1200, player) >= menu.itemd.apd.frostx:get() and GetDistance(target) < 1200 and GetDistance(target) > 400 then
 		for i = 6, 11 do
 			local item = player:spellslot(i).name
 			if item and item == "ItemGlacialSpikeCast" or item == "ItemWraithCollar" then
@@ -378,7 +377,7 @@ end
 
 function Shields()
 	if not player.isDead then
-		if menu.itemd.def.zhonya:get() and CountEnemyHeroInRange(700) >= 1 and common.GetPercentHealth(player) <= menu.itemd.def.itemhp:get() then
+		if menu.itemd.def.zhonya:get() and CountEnemyHeroInRange(700) >= 1 and common.GetPercentHealth(player) <= menu.itemd.def.itemhp:get() and selector.valid_target(player) then
 			for i = 6, 11 do
 		    	local item = player:spellslot(i).name
 		    	if item and item == "ZhonyasHourglass" or item == "Item2420" then
@@ -410,7 +409,7 @@ function Shields()
 				end
 			end
 		end
-		if menu.itemd.buf.toa:get() and CountAllysInRange(500) >= menu.itemd.buf.toax:get() then
+		if menu.itemd.buf.toa:get() and CountAllysInRange(500) >= menu.itemd.buf.toax:get() and CountEnemyHeroInRange(800) > 1 then
 			for i = 6, 11 do
 				local item = player:spellslot(i).name
 				if item and item == "ShurelyasCrest" then
@@ -418,7 +417,7 @@ function Shields()
 				end
 			end
 		end
-		if menu.itemd.buf.lois:get() and CountAllysInRange(500) >= menu.itemd.buf.loisx:get() and CountEnemyHeroInRange(1000) >= 1 then
+		if menu.itemd.buf.lois:get() and CountAllysInRange(500) >= menu.itemd.buf.loisx:get() and CountEnemyHeroInRange(1000) >= 1 and common.GetPercentHealth(player) <= menu.itemd.buf.loishp:get() then
 			for i = 6, 11 do
 				local item = player:spellslot(i).name
 				if item and item == "IronStylus" then
@@ -438,65 +437,76 @@ function Shields()
 end
 
 
-
-function CastItems()
-    if common.IsValidTarget(orb.combat.target) then
+function CastItems(target)
+    if common.IsValidTarget(target) then
 		if menu.itemo.ado.bwc:get() then
-			if common.GetPercentHealth(orb.combat.target) <= menu.itemo.ado.bwcathp:get() and player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 550 then
+			if common.GetPercentHealth(target) <= menu.itemo.ado.bwcathp:get() and player.path.serverPos:dist(target.path.serverPos) <= 550 then
 				for i = 6, 11 do
 	  				local item = player:spellslot(i).name
 	  				if item and (item == 'BilgewaterCutlass') then
-	    				game.cast("obj", i, orb.combat.target)
+	    				game.cast("obj", i, target)
 	  				end
 				end
 			end
 		end
 		if menu.itemo.ado.botrk:get() then
-			if common.GetPercentHealth(orb.combat.target) <= menu.itemo.ado.botrkathp:get() or common.GetPercentHealth(player) <= menu.itemo.ado.botrkatownhp:get() and player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 550 then
+			if common.GetPercentHealth(target) <= menu.itemo.ado.botrkathp:get() or common.GetPercentHealth(player) <= menu.itemo.ado.botrkatownhp:get() and player.path.serverPos:dist(target.path.serverPos) <= 550 then
 				for i = 6, 11 do
 	  				local item = player:spellslot(i).name
 	  				if item and (item == 'ItemSwordOfFeastAndFamine') then
-	    				game.cast("obj", i, orb.combat.target)
+	    				game.cast("obj", i, target)
 	  				end
 				end
 			end
 		end
 		if menu.itemo.ado.tiamat:get() then
-			if player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 300 and not orb.core.can_attack() then
+			if player.path.serverPos:dist(target.path.serverPos) <= 300 and not orb.core.can_attack() then
 				for i = 6, 11 do
 	  				local item = player:spellslot(i).name
 	  				if item and (item == 'ItemTiamatCleave') then
 	    				game.cast("self", i)
+	    				--orb.core.reset()
 	  				end
 				end
 			end
 		end
 		if menu.itemo.ado.titanic:get() then
-			if player.path.serverPos:dist(orb.combat.target.path.serverPos) <= player.attackRange + player.boundingRadius and not orb.core.can_attack() then
+			if player.path.serverPos:dist(target.path.serverPos) <= player.attackRange + player.boundingRadius and not orb.core.can_attack() then
 				for i = 6, 11 do
 	  				local item = player:spellslot(i).name
 	  				if item and (item == "ItemTitanicHydraCleave" ) then
 	    				game.cast("self", i)
+	    				--orb.core.reset()
 	  				end
 				end
 			end
 		end
 		if menu.itemo.apo.bwc:get() then
-			if common.GetPercentHealth(orb.combat.target) <= menu.itemo.apo.bwcathp:get() and player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 550 then
+			if common.GetPercentHealth(target) <= menu.itemo.apo.bwcathp:get() and player.path.serverPos:dist(target.path.serverPos) <= 550 then
 				for i = 6, 11 do
 	  				local item = player:spellslot(i).name
 	  				if item and (item == 'BilgewaterCutlass') then
-	    				game.cast("obj", i, orb.combat.target)
+	    				game.cast("obj", i, target)
 	  				end
 				end
 			end
 		end
 		if menu.itemo.apo.hex:get() then
-			if common.GetPercentHealth(orb.combat.target) <= menu.itemo.apo.hexathp:get() and player.path.serverPos:dist(orb.combat.target.path.serverPos) <= 700 then
+			if common.GetPercentHealth(target) <= menu.itemo.apo.hexathp:get() and player.path.serverPos:dist(target.path.serverPos) <= 700 then
 				for i = 6, 11 do
 	  				local item = player:spellslot(i).name
 	  				if item and (item == 'HextechGunblade') then
-	    				game.cast("obj", i, orb.combat.target)
+	    				game.cast("obj", i, target)
+	  				end
+				end
+			end
+		end
+		if menu.itemo.apo.pro:get() then
+			if common.GetPercentHealth(target) <= menu.itemo.apo.proathp:get() and player.path.serverPos:dist(target.path.serverPos) <= 700 then
+				for i = 6, 11 do
+	  				local item = player:spellslot(i).name
+	  				if item and (item == 'ItemSoFBoltSpellBase' or item == "ItemWillBoltSpellBase") then
+	    				game.cast("self", i)
 	  				end
 				end
 			end
@@ -505,10 +515,10 @@ function CastItems()
 end
 
 function ShieldAlly()
-	if menu.itemd.buf.fom:get() and CountEnemyHeroInRange(600) >= 1 and CountAllysInRange(500) >= 1 then
-		for i = 1, #allies do
-			local hero = allies[i]
-			if hero and not hero.dead and common.GetDistance(player, hero) < 500 and common.GetPercentHealth(hero) <=  menu.itemd.buf.fomx:get() then
+	if menu.itemd.buf.fom:get() and CountEnemyHeroInRange(800) >= 1 and #common.GetAllyHeroesInRange(500, player) >= 1 then
+		for i = 1, #cAlly do
+			local hero = cAlly[i]
+			if hero and not hero.dead and hero.pos:dist(player.pos) < 500 and common.GetPercentHealth(hero) <=  menu.itemd.buf.fomx:get() then
 				for i = 6, 11 do
 					local item = player:spellslot(i).name
 					if item and item == "HealthBomb" then
@@ -529,7 +539,7 @@ function UsePotion()
 	end
 	for i = 6, 11 do
 		local item = player:spellslot(i).name
-		if item and item == "RegenerationPotion" or item == "ItemMiniRegenPotion" or item == "ItemCrystalFlask" or item == "ItemDarkCrystalFlask" then
+		if item and item == "RegenerationPotion" or item == "ItemMiniRegenPotion" or item == "ItemCrystalFlask" or item == "ItemDarkCrystalFlask" or item == "Item2010" or item == "LootedRegenerationPotion" or item == "ItemCrystalFlaskJungle" or item == "LootedPotionOfGiantStrength" then
 			game.cast("self", i)
 			lastPotion = os.clock()
 		end
@@ -556,14 +566,75 @@ function CountEnemyHeroInRange(range)
 	return count 
 end
 
-function OnTick()
-	if smiteSlot then AutoSmite() end
-	if menu.keys.combo then Combo() end
-	if healSlot then AutoHeal() end
-	if barrierSlot then AutoBarrier() end
-	if igniteSlot then AutoIgnite() end
-	if menu.pot.usep and not potionOn and not common.InFountain() and common.GetPercentHealth(player) <=  menu.pot.usepx:get() then UsePotion() end
+function oncreateobj(obj)
+    if obj.name == "ThreshLantern" or obj.name:find("Lantern") then
+        lantern = nil
+    end
 end
+ 
+function ondeleteobj(obj)
+    if obj.name == "ThreshLantern" or obj.name:find("Lantern") then
+        lantern = nil
+    end
+end
+
+function GetDistance(p1, p2)
+	p2 = p2 or player;
+	return p1.path.serverPos:dist(p2.path.serverPos)
+end
+
+function GetTarget(range)
+	range = range or 1500;
+	if orb.combat.target and selector.valid_target(orb.combat.target) and not orb.combat.target.isDead and orb.combat.target.isTargetable
+	 and orb.combat.target.isInvulnerable and orb.combat.target.isMagicImmune and orb.combat.target.isVisible then
+		return orb.combat.target
+	else
+		local dist, closest = math.huge, nil;
+		for k, unit in pairs(GetEnemy()) do
+			local unit_distance = GetDistance(unit);
+			if not unit.isDead and unit.isVisible and unit.isTargetable 
+				and unit.isInvulnerable and unit.isMagicImmune and unit_distance <= range then
+				if unit_distance < dist then
+					closest = unit;
+					dist = unit_distance;
+				end
+			end
+		end
+		if closest then
+			return closest
+		end
+	end
+	return nil
+end
+
+function _enemy_init()
+	_enemyHeroes = {};
+	for i = 0, objmanager.enemies_n - 1 do
+		_enemyHeroes[#_enemyHeroes + 1] = objmanager.enemies[i];
+	end
+	return _enemyHeroes
+end
+
+function GetEnemy()
+	if _enemyHeroes then 
+		return _enemyHeroes 
+	else
+		return _enemy_init();
+	end
+end
+
+function OnTick()
+	target = GetTarget()
+	if smiteSlot then AutoSmite() end
+	if menu.keys.combo:get() and target then Combo() end
+	if healSlot and target then AutoHeal() end
+	if barrierSlot and target then AutoBarrier() end
+	if igniteSlot then AutoIgnite() end
+	if menu.pot.usep:get() and not potionOn and not common.InFountain() and common.GetPercentHealth(player) <=  menu.pot.usepx:get() then UsePotion() end
+	if menu.itemd.def.tl:get() and lantern ~= nil then local distance = common.GetDistance(player, lantern) if distance < 250 then game.cast("obj", 62, lantern) end end
+	if menu.pot.useg:get() then for i = 6, 11 do local item = player:spellslot(i).name if item == "ItemSackOfGold" then game.cast("self", i) end end end
+end
+
 
 function OnDraw()
 	if smiteSlot and common.CanUseSpell(smiteSlot) and menu.draws.smite:get() then
@@ -577,6 +648,9 @@ end
 
 callback.add(enum.callback.draw, function() OnDraw() end)
 callback.add(enum.callback.tick, function() OnTick() end)
+callback.add(enum.callback.recv.createobj, oncreateobj)
+callback.add(enum.callback.recv.deleteobj, ondeleteobj)
+--callback.add(enum.callback.recv.losevision, function() losevision(target) end)
 callback.add(enum.callback.recv.removebuff, OnRemoveBuff)
 callback.add(enum.callback.recv.updatebuff, OnUpdateBuff)
 
