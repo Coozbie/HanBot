@@ -85,7 +85,7 @@ function Combo()
 				if common.CanUseSpell(3) then
 					game.cast("pos", 3, vec3(game.mousePos))
 				end
-			elseif menu.combo.rs.mode:get() == 2 and menu.combo.rs.ur:get() and CountEnemyHeroInRange(800) >= menu.combo.rs.rx:get() and rDmg(target) + qDmg(target) + eDmg(target) > target.health then
+			elseif menu.combo.rs.mode:get() == 2 and menu.combo.rs.ur:get() and player:spellslot(3).state == 0 and CountEnemyHeroInRange(800) >= menu.combo.rs.rx:get() and rDmg(target) + qDmg(target) + eDmg(target) > target.health then
 				CastR(target)
 			end
 		end
