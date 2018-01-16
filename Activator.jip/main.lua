@@ -7,6 +7,7 @@ local draw = alib.draw
 local enemies = common.GetEnemyHeroes()
 local cAlly = common.GetAllyHeroes() 
 local lantern = nil
+local potionOn = false
 
 local smiteDmg = { 390, 410, 430, 450, 480, 510, 540, 570, 600, 640, 680, 720, 760, 800, 850, 900, 950, 1000 }
 local smiteDmgKs = {28, 36, 44, 52, 60, 68, 76, 84, 92, 100, 108, 116, 124, 132, 140, 148, 156, 164}
@@ -255,20 +256,22 @@ end
 
 function AutoIgnite()
 	for i, enemy in ipairs(enemies) do
-        if common.IsValidTarget(enemy) and selector.is_valid(enemy) and player.path.serverPos:dist(enemy.path.serverPos) <= 600 then
+        if common.IsValidTarget(enemy) and selector.is_valid(enemy) and player.path.serverPos:dist(enemy.path.serverPos) <= 600 and player.path.serverPos:dist(enemy.path.serverPos) >= 500 then
             if menu.sum.ign.Ignite:get() and igniteSlot and common.CanUseSpell(igniteSlot) and igniteDmg[player.level] > enemy.health then game.cast("obj", igniteSlot, enemy) end
+        elseif common.IsValidTarget(enemy) and selector.is_valid(enemy) and player.path.serverPos:dist(enemy.path.serverPos) <= 500 and player.path.serverPos:dist(enemy.path.serverPos) >= 200 then
+        	if menu.sum.ign.Ignite:get() and igniteSlot and common.CanUseSpell(igniteSlot) and igniteDmg[player.level] + 100 > enemy.health then game.cast("obj", igniteSlot, enemy) end
         end
     end
 end
 
 function AutoHeal()
-	if not player.isDead and healSlot and menu.sum.hs.uh:get() and common.CanUseSpell(healSlot) and player.health <= menu.sum.hs.uhx:get() / 100 * player.maxHealth and CountEnemyHeroInRange(900) >= 1 then
+	if not player.isDead and healSlot and menu.sum.hs.uh:get() and common.CanUseSpell(healSlot) and player.health <= menu.sum.hs.uhx:get() / 100 * player.maxHealth and CountEnemyHeroInRange(700) >= 1 then
 		game.cast("self", healSlot)
 	end
 end
 
 function AutoBarrier()
-	if not player.isDead and menu.sum.bs.ub:get() and barrierSlot and common.CanUseSpell(barrierSlot) and player.health <= menu.sum.bs.ubx:get() / 100 * player.maxHealth and CountEnemyHeroInRange(900) >= 1 then
+	if not player.isDead and menu.sum.bs.ub:get() and barrierSlot and common.CanUseSpell(barrierSlot) and player.health <= menu.sum.bs.ubx:get() / 100 * player.maxHealth and CountEnemyHeroInRange(700) >= 1 then
 		game.cast("self", barrierSlot)
 	end
 end
@@ -337,8 +340,8 @@ function AntiCC(typeName)
 		end
 	end
 	if cleanseSlot then
-		if menu.itemd.qssop.usecle:get() and useCleanse and typeName ~= "Suppression" then
-			game.cast("self", cleanseSlot)
+		if menu.itemd.qssop.usecle:get() and useCleanse and buff.type ~= 24 then
+			common.DelayAction(function() game.cast("self", cleanseSlot) end, 0.3)
 		end
 	end
 end
