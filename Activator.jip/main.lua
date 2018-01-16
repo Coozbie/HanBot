@@ -265,13 +265,13 @@ function AutoIgnite()
 end
 
 function AutoHeal()
-	if not player.isDead and healSlot and menu.sum.hs.uh:get() and common.CanUseSpell(healSlot) and player.health <= menu.sum.hs.uhx:get() / 100 * player.maxHealth and CountEnemyHeroInRange(700) >= 1 then
+	if not player.isDead and healSlot and menu.sum.hs.uh:get() and common.CanUseSpell(healSlot) and player.health + 60 <= menu.sum.hs.uhx:get() / 100 * player.maxHealth and CountEnemyHeroInRange(700) >= 1 then
 		game.cast("self", healSlot)
 	end
 end
 
 function AutoBarrier()
-	if not player.isDead and menu.sum.bs.ub:get() and barrierSlot and common.CanUseSpell(barrierSlot) and player.health <= menu.sum.bs.ubx:get() / 100 * player.maxHealth and CountEnemyHeroInRange(700) >= 1 then
+	if not player.isDead and menu.sum.bs.ub:get() and barrierSlot and common.CanUseSpell(barrierSlot) and player.health + 60 <= menu.sum.bs.ubx:get() / 100 * player.maxHealth and CountEnemyHeroInRange(700) >= 1 then
 		game.cast("self", barrierSlot)
 	end
 end
@@ -312,7 +312,7 @@ function OnUpdateBuff(buff, source)
 	if buff and buff.valid and buff.owner and buff.owner == player then
 		if buff.name == "RegenerationPotion" or buff.name == "ItemMiniRegenPotion" or buff.name == "ItemCrystalFlask" or buff.name == "ItemDarkCrystalFlask" or buff.name == "LootedRegenerationPotion" or buff.name == "Item2010" or buff.name == "ItemCrystalFlaskJungle" then
 			potionOn = true
-			print("true player")
+			--print("true player")
 		end
 	end
 end
@@ -321,7 +321,7 @@ function OnRemoveBuff(buff, source)
 	if buff and buff.valid and buff.owner and buff.owner == player then
 		if buff.name == "RegenerationPotion" or buff.name == "ItemMiniRegenPotion" or buff.name == "ItemCrystalFlask" or buff.name == "ItemDarkCrystalFlask" or buff.name == "LootedRegenerationPotion" or buff.name == "Item2010" or buff.name == "ItemCrystalFlaskJungle" then
 			potionOn = false
-			print("false")
+			--print("false")
 		end
 	end
 end
