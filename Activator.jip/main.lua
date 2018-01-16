@@ -74,10 +74,6 @@ local menu = menuconfig("activator", "Activator")
 			menu.itemo.apo:boolean("bwc", "Use Bligewater Cutlass", true)
 			menu.itemo.apo:slider("bwcathp", "Use if enemy health is below %", 60, 10, 100, 10)
 
-			menu.itemo.apo:header("xd", "Protobelt Settings")
-			menu.itemo.apo:boolean("pro", "Use Protobelt", true)
-			menu.itemo.apo:slider("proathp", "Use if enemy health is below %", 60, 10, 100, 10)
-
 		menu.itemo:menu("ado", "AD Items")
 			menu.itemo.ado:header("xd", "Bligewater Settings")
 			menu.itemo.ado:boolean("bwc", "Use Bligewater Cutlass", true)
@@ -501,16 +497,6 @@ function CastItems(target)
 				end
 			end
 		end
-		if menu.itemo.apo.pro:get() then
-			if common.GetPercentHealth(target) <= menu.itemo.apo.proathp:get() and player.path.serverPos:dist(target.path.serverPos) <= 700 then
-				for i = 6, 11 do
-	  				local item = player:spellslot(i).name
-	  				if item and (item == 'ItemSoFBoltSpellBase' or item == "ItemWillBoltSpellBase") then
-	    				game.cast("self", i)
-	  				end
-				end
-			end
-		end
 	end
 end
 
@@ -533,7 +519,7 @@ end
 
 local lastPotion = 0
 function UsePotion()
-	if os.clock() - lastPotion < 11 then return end
+	if os.clock() - lastPotion < 8 then return end
 	if not menu.pot.enemy:get() then
 		if CountEnemyHeroInRange(750) == 0 then return end
 	end
