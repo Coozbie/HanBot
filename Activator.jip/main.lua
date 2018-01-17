@@ -264,13 +264,17 @@ function AutoSmite()
 end
 
 function AutoIgnite()
-	for i, enemy in ipairs(enemies) do
-        if common.IsValidTarget(enemy) and selector.is_valid(enemy) and player.path.serverPos:dist(enemy.path.serverPos) <= 600 and player.path.serverPos:dist(enemy.path.serverPos) >= 500 then
-            if menu.sum.ign.Ignite:get() and igniteSlot and common.CanUseSpell(igniteSlot) and igniteDmg[player.level] > enemy.health then game.cast("obj", igniteSlot, enemy) end
-        elseif common.IsValidTarget(enemy) and selector.is_valid(enemy) and player.path.serverPos:dist(enemy.path.serverPos) <= 500 and player.path.serverPos:dist(enemy.path.serverPos) >= 200 then
-        	if menu.sum.ign.Ignite:get() and igniteSlot and common.CanUseSpell(igniteSlot) and igniteDmg[player.level] + 100 > enemy.health then game.cast("obj", igniteSlot, enemy) end
-        end
-    end
+	if not player.isDead then 
+		for i, enemy in ipairs(enemies) do
+			if common.GetPercentHealth(enemy) < 15 then
+		        if common.IsValidTarget(enemy) and selector.is_valid(enemy) and player.path.serverPos:dist(enemy.path.serverPos) <= 600 and player.path.serverPos:dist(enemy.path.serverPos) >= 500 then
+		            if menu.sum.ign.Ignite:get() and igniteSlot and common.CanUseSpell(igniteSlot) and igniteDmg[player.level] > enemy.health then game.cast("obj", igniteSlot, enemy) end
+		        elseif common.IsValidTarget(enemy) and selector.is_valid(enemy) and player.path.serverPos:dist(enemy.path.serverPos) <= 500 and player.path.serverPos:dist(enemy.path.serverPos) >= 200 then
+		        	if menu.sum.ign.Ignite:get() and igniteSlot and common.CanUseSpell(igniteSlot) and igniteDmg[player.level] + 40 > enemy.health then game.cast("obj", igniteSlot, enemy) end
+		        end
+		    end
+	    end
+	end
 end
 
 function AutoHeal()
@@ -625,9 +629,9 @@ function OnTick()
 	target = GetTarget()
 	if smiteSlot then AutoSmite() end
 	if menu.keys.combo:get() and target then Combo() end
-	if healSlot and target then AutoHeal() end
-	if barrierSlot and target then AutoBarrier() end
-	if igniteSlot then AutoIgnite() end
+	if healSlot and menu.sum.hs.uh:get() and target then AutoHeal() end
+	if barrierSlot and menu.sum.bs.ub:get() and target then AutoBarrier() end
+	if igniteSlot and menu.sum.ign.Ignite:get() then AutoIgnite() end
 	if menu.pot.usep:get() and not potionOn and not common.InFountain() and common.GetPercentHealth(player) <=  menu.pot.usepx:get() then UsePotion() end
 	if menu.itemd.def.tl:get() and lantern ~= nil then local distance = common.GetDistance(player, lantern) if distance < 250 then game.cast("obj", 62, lantern) end end
 	if menu.pot.useg:get() then for i = 6, 11 do local item = player:spellslot(i).name if item == "ItemSackOfGold" then game.cast("self", i) end end end
