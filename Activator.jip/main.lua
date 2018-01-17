@@ -18,6 +18,12 @@ elseif player:spellslot(5).name == "SummonerSmite" or player:spellslot(5).name =
 	smiteSlot = 5
 end
 
+if player:spellslot(4).name == "S5_SummonerSmiteDuel" then
+	rsmiteSlot = 4
+elseif player:spellslot(5).name == "S5_SummonerSmiteDuel" then
+	rsmiteSlot = 5
+end
+
 local healSlot = nil
 if player:spellslot(4).name == "SummonerHeal" then
 	healSlot = 4
@@ -184,8 +190,10 @@ local menu = menuconfig("activator", "Activator")
 			menu.sum.smite:boolean("b", "Use for Blue", true)
 			menu.sum.smite:boolean("r", "Use for Red", true)
 
-			menu.sum.smite:header("xd", "Killsteal Settings")
+			menu.sum.smite:header("xd", "Enemy Settings")
 			menu.sum.smite:boolean("ks", "Use for Killsteal", true)
+			menu.sum.smite:boolean("hp", "Use Red Smite for enemy", false)
+			menu.sum.smite:slider("hpx", "Use if enemy HP % <=", 60, 10, 100, 10)
 		end
 
 		if healSlot then
@@ -249,6 +257,7 @@ function AutoSmite()
 		for i, enemy in ipairs(enemies) do
         	if common.IsValidTarget(enemy) and selector.is_valid(enemy) and player.path.serverPos:dist(enemy.path.serverPos) <= 560 then
             	if menu.sum.smite.ks:get() and smiteDmgKs[player.level] > enemy.health then game.cast("obj", smiteSlot, enemy) end
+            	if menu.sum.smite.hp:get() and common.GetPercentHealth(enemy) <= menu.sum.smite.hpx:get() then game.cast("obj", rsmiteSlot, enemy) end
         	end
     	end
 	end
