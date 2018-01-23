@@ -3,6 +3,8 @@ local version = "1.1"
 local alib = module.load("avada_lib")
 local common = alib.common
 local draw = alib.draw
+local ts = alib.targetSelector
+local enemies = common.GetEnemyHeroes()
 
 local orb = module.internal("orb/main")
 local gpred = module.internal("pred/main")
@@ -20,6 +22,7 @@ local ePred = { delay = 0.25, width = 30, speed = 1000, boundingRadiusMod = 1, c
 local rPred = { delay = 0.6, width = 120, speed = 1700, boundingRadiusMod = 1, collision = { hero = true, minion = false } }
 
 local menu = menuconfig("jinx", "Cyrex Jinx")
+	ts = ts(menu, 2000)
 	menu:header("script", "Cyrex Jinx")
 	menu:menu("keys", "Key Settings")
 		menu.keys:header("xd", "Where The Magic Happens")
@@ -58,6 +61,8 @@ local menu = menuconfig("jinx", "Cyrex Jinx")
 		menu.auto:header("xd", "Auto Spells")
 		menu.auto:boolean("ae", "Auto E on CC'ed Enemys", true)
 
+	ts:addToMenu()
+
 	menu:menu("draws", "Draw Settings")
 		menu.draws:header("xd", "Drawing Options")
 		menu.draws:boolean("q", "Draw Q Range", true)
@@ -66,11 +71,10 @@ local menu = menuconfig("jinx", "Cyrex Jinx")
 	menu:header("author", "Author: Coozbie")
 
 function OnTick()
-	target = GetTarget()
-	if menu.keys.combo:get() and target then Combo() end
-	if menu.keys.harass:get() and target then Harass() end
+	if menu.keys.combo:get() then Combo() end
+	if menu.keys.harass:get() then Harass() end
 	if menu.auto.uks:get() then KillSteal() end
-	if menu.keys.me:get() and target then Manual() end
+	if menu.keys.me:get() then Manual() end
 	if menu.auto.ae:get() then AutoE() end
 	if orb.cs.farm_is_active() and player:spellslot(0).state == 0 and not MiniGun then game.cast("self", 0) end
 	if not MiniGun and menu.combo.qm:get() then if common.CanUseSpell(0) and player.par / player.maxPar * 100 <= menu.combo.Mana:get() then game.cast("self", 0) end end
@@ -78,45 +82,51 @@ end
 
 function Combo()
 	if menu.keys.combo:get() then
-		if menu.combo.q:get() and player:spellslot(0).state == 0 and player.par / player.maxPar * 100 >= menu.combo.Mana:get() then
-			if MiniGun then
-				if menu.combo.qr:get() and CountEnemyHeroInRange(525) == 0 and GetDistance(target) <= (QRange[player:spellslot(0).level] + 600) then
-					if GetDistance(target) > 600 then
-						game.cast("self", 0)
+		local target = ts.target
+		if target and not target.isDead and not common.HasBuffType(target, 17) then
+			if menu.combo.q:get() and player:spellslot(0).state == 0 and player.par / player.maxPar * 100 >= menu.combo.Mana:get() then
+				if MiniGun then
+					if menu.combo.qr:get() and CountEnemyHeroInRange(525) == 0 and selector.get_dist(target) <= (QRange[player:spellslot(0).level] + 600) then
+						if selector.get_dist(target) > 600 then
+							game.cast("self", 0)
+						end
 					end
-				end
-			elseif not MiniGun and menu.combo.qr:get() and GetDistance(target) <= 535 then
-				game.cast("self", 0)
-			end	
-			if menu.combo.qe:get() and #common.GetEnemyHeroesInRange(800, player) == 0 and not MiniGun then game.cast("self", 0) end		
+				elseif not MiniGun and menu.combo.qr:get() and selector.get_dist(target) <= 535 then
+					game.cast("self", 0)
+				end	
+				if menu.combo.qe:get() and #common.GetEnemyHeroesInRange(800, player) == 0 and not MiniGun then game.cast("self", 0) end		
+			end
+			if menu.combo.w:get() and selector.get_dist(target) > (QRange[player:spellslot(0).level] + 600) then
+				CastW(target)
+			end
+			if menu.combo.r:get() and player:spellslot(3).state == 0 and selector.get_dist(target) > menu.combo.rr:get() and rDmg(target) > target.health then
+				CastR(target)
+			end
+			WeirdR()
 		end
-		if menu.combo.w:get() and GetDistance(target) > (QRange[player:spellslot(0).level] + 600) then
-			CastW(target)
-		end
-		if menu.combo.r:get() and player:spellslot(3).state == 0 and GetDistance(target) > menu.combo.rr:get() and rDmg(target) > target.health then
-			CastR(target)
-		end
-		WeirdR()
 	end
 end
 
 function Harass()
 	if menu.keys.harass:get() then
-		if player.par / player.maxPar * 100 >= menu.harass.Mana:get() then
-			if menu.harass.q:get() and common.CanUseSpell(0) then
-				if MiniGun then
-					if menu.harass.qr:get() and CountEnemyHeroInRange(525) == 0 and GetDistance(target) < (QRange[player:spellslot(0).level] + 600) then
-						if GetDistance(target) > 600 then
-							game.cast("self", 0)
+		local target = ts.target
+		if target and not target.isDead and not common.HasBuffType(target, 17) then
+			if player.par / player.maxPar * 100 >= menu.harass.Mana:get() then
+				if menu.harass.q:get() and common.CanUseSpell(0) then
+					if MiniGun then
+						if menu.harass.qr:get() and CountEnemyHeroInRange(525) == 0 and selector.get_dist(target) < (QRange[player:spellslot(0).level] + 600) then
+							if selector.get_dist(target) > 600 then
+								game.cast("self", 0)
+							end
 						end
-					end
-				elseif not MiniGun and menu.harass.qr:get() and GetDistance(target) <= 525 then
-					game.cast("self", 0)
-				end	
-			if menu.harass.qe:get() and #common.GetEnemyHeroesInRange(800, player) == 0 and not MiniGun then game.cast("self", 0) end		
-			end
-			if menu.harass.w:get() and GetDistance(target) > 650 then
-				CastW(target)
+					elseif not MiniGun and menu.harass.qr:get() and selector.get_dist(target) <= 525 then
+						game.cast("self", 0)
+					end	
+				if menu.harass.qe:get() and #common.GetEnemyHeroesInRange(800, player) == 0 and not MiniGun then game.cast("self", 0) end		
+				end
+				if menu.harass.w:get() and selector.get_dist(target) > 650 then
+					CastW(target)
+				end
 			end
 		end
 	end
@@ -148,15 +158,15 @@ end
 
 
 function KillSteal()
-	for i, enemy in pairs(GetEnemy()) do
+	for i, enemy in pairs(enemies) do
 		if not enemy.isDead and enemy.isVisible and enemy.isTargetable and menu.auto.uks:get() then
 			local hp = enemy.health;
 			if hp == 0 then return end
-			if player:spellslot(1).state == 0 and wDmg(enemy) > hp and GetDistance(enemy) <= 1500 then
+			if player:spellslot(1).state == 0 and wDmg(enemy) > hp and selector.get_dist(enemy) <= 1500 then
 				CastW(enemy);
-			elseif player:spellslot(3).state == 0 and rDmg(enemy) > hp and menu.auto.ukse:get() and GetDistance(enemy) <= 3000 and GetDistance(enemy) > 1200 then
+			elseif player:spellslot(3).state == 0 and rDmg(enemy) > hp and menu.auto.ukse:get() and selector.get_dist(enemy) <= 3000 and selector.get_dist(enemy) > 1200 then
 				CastR(enemy);
-			elseif player:spellslot(3).state == 0 and player:spellslot(1).state == 0 and (wDmg(enemy) + rDmg(enemy) > hp) and menu.auto.ukse:get() and GetDistance(enemy) < 1500 and GetDistance(enemy) > 800 then
+			elseif player:spellslot(3).state == 0 and player:spellslot(1).state == 0 and (wDmg(enemy) + rDmg(enemy) > hp) and menu.auto.ukse:get() and selector.get_dist(enemy) < 2000 and selector.get_dist(enemy) > 1000 then
 				CastR(enemy)
 				CastW(enemy)
 			end
@@ -167,12 +177,15 @@ end
 
 function Manual()
 	if menu.keys.me:get() then
-		game.issue("move", vec3(game.mousePos))
-		if common.CanUseSpell(2) and GetDistance(target) < 850 then
-			local seg = gpred.linear.get_prediction(ePred, target)
-			if seg and seg.startPos:dist(seg.endPos) < 850 then
-				if not gpred.collision.get_prediction(ePred, seg, target) then
-					game.cast("pos", 2, vec3(seg.endPos.x, game.mousePos.y, seg.endPos.y))
+		local target = ts.target
+		if target and not target.isDead and not common.HasBuffType(target, 17) then
+			game.issue("move", vec3(game.mousePos))
+			if common.CanUseSpell(2) and selector.get_dist(target) < 850 then
+				local seg = gpred.linear.get_prediction(ePred, target)
+				if seg and seg.startPos:dist(seg.endPos) < 850 then
+					if not gpred.collision.get_prediction(ePred, seg, target) then
+						game.cast("pos", 2, vec3(seg.endPos.x, game.mousePos.y, seg.endPos.y))
+					end
 				end
 			end
 		end
@@ -180,9 +193,9 @@ function Manual()
 end
 
 function AutoE()
-	for i, enemy in pairs(GetEnemy()) do
+	for i, enemy in pairs(enemies) do
 		if not enemy.isDead and enemy.isVisible and enemy.isTargetable then
-			if EnemyCC == true and GetDistance(enemy) < 750 then
+			if EnemyCC == true and selector.get_dist(enemy) < 750 then
 				if common.CanUseSpell(2) then
 					local seg = gpred.linear.get_prediction(ePred, target)
 					if seg and seg.startPos:dist(seg.endPos) < 850 then
@@ -227,9 +240,9 @@ end
 
 function WeirdR()
 	if menu.combo.r:get() then
-		for i, enemy in pairs(GetEnemy(10000)) do
+		for i, enemy in pairs(enemies) do
 			if not enemy.isDead and enemy.isVisible and enemy.isTargetable and enemy.isRecalling or EnemyCC == true then
-				if GetDistance(enemy) > menu.combo.rr:get() then
+				if selector.get_dist(enemy) > menu.combo.rr:get() then
 					if player:spellslot(3).state == 0 and rDmg(target) > target.health then
 						CastR(enemy)
 					end
@@ -240,7 +253,7 @@ function WeirdR()
 end
 
 
---[Spyk Credits]--
+
 function wDmg(target)
 	local wDamage = CalcADmg(target, WlvlDmg[player:spellslot(1).level] + player.flatPhysicalDamageMod * 1.4, player)
 	return wDamage
@@ -272,51 +285,6 @@ function CalcADmg(target, amount, from)
 	return math.floor(amount)
 end
 
-function GetDistance(p1, p2)
-	p2 = p2 or player;
-	return p1.path.serverPos:dist(p2.path.serverPos)
-end
-
-function GetTarget(range)
-	range = range or 1500;
-	if orb.combat.target and selector.valid_target(orb.combat.target) and not orb.combat.target.isDead and orb.combat.target.isTargetable
-	 and orb.combat.target.isInvulnerable and orb.combat.target.isMagicImmune and orb.combat.target.isVisible then
-		return orb.combat.target
-	else
-		local dist, closest = math.huge, nil;
-		for k, unit in pairs(GetEnemy()) do
-			local unit_distance = GetDistance(unit);
-			if not unit.isDead and unit.isVisible and unit.isTargetable 
-				and unit.isInvulnerable and unit.isMagicImmune and unit_distance <= range then
-				if unit_distance < dist then
-					closest = unit;
-					dist = unit_distance;
-				end
-			end
-		end
-		if closest then
-			return closest
-		end
-	end
-	return nil
-end
-
-function _enemy_init()
-	_enemyHeroes = {};
-	for i = 0, objmanager.enemies_n - 1 do
-		_enemyHeroes[#_enemyHeroes + 1] = objmanager.enemies[i];
-	end
-	return _enemyHeroes
-end
-
-function GetEnemy()
-	if _enemyHeroes then 
-		return _enemyHeroes 
-	else
-		return _enemy_init();
-	end
-end
---[End Spyk Credits]--
 
 
 function OnDraw()
