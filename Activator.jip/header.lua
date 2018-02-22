@@ -1,9 +1,7 @@
 return {
-  ["scriptType"] = "Other",
-  ["scriptName"] = "Activator",
-  ["moduleName"] = "activator",
-  ["entryPoint"] = "main.lua",
-  ["loadToCoreMenu"] = function()
+  id = "cbActivator",
+  name = "Activator",
+  load = function()
     return true
-  end
+  end,
 }
