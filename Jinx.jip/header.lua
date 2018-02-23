@@ -1,9 +1,7 @@
 return {
-  ["scriptType"] = "Champion",
-  ["scriptName"] = "Cyrex Jinx",
-  ["moduleName"] = "jinx",
-  ["entryPoint"] = "main.lua",
-  ["loadToCoreMenu"] = function()
-    return player.charName == "Jinx"
-  end
+    id = 'CyrexJinx',
+    name = 'Cyrex Jinx',
+    load = function()
+      return player.charName == 'Jinx'
+    end
 }
