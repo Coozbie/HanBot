@@ -1,9 +1,7 @@
 return {
-  ["scriptType"] = "Champion",
-  ["scriptName"] = "Cyrex Ahri",
-  ["moduleName"] = "ahrigod",
-  ["entryPoint"] = "main.lua",
-  ["loadToCoreMenu"] = function()
-    return player.charName == "Ahri"
-  end
+    id = 'CyrexAhri',
+    name = 'Cyrex Ahri',
+    load = function()
+      return player.charName == 'Ahri'
+    end
 }
