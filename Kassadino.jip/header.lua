@@ -1,9 +1,7 @@
 return {
-  ["scriptType"] = "Champion",
-  ["scriptName"] = "Cyrex Kassadin",
-  ["moduleName"] = "kassadin",
-  ["entryPoint"] = "main.lua",
-  ["loadToCoreMenu"] = function()
-    return player.charName == "Kassadin"
-  end
+    id = 'CyrexKass',
+    name = 'Cyrex Kassadino',
+    load = function()
+      return player.charName == 'Kassadin'
+    end
 }
