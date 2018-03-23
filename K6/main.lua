@@ -1,4 +1,4 @@
-local version = "1.03"
+local version = "1.04"
 
 local avada_lib = module.lib('avada_lib')
 if not avada_lib then
@@ -78,7 +78,7 @@ local menu = menu("k6", "Khantum Phyzix")
 		menu.draws:boolean("q", "Draw Q Range", true)
 		menu.draws:boolean("e", "Draw E Range", true)
 	ts:addToMenu()
-	menu:header("version", "Version: 1.03")
+	menu:header("version", "Version: 1.04")
 	menu:header("author", "Author: Coozbie")
 
 local function OnTick()
@@ -223,7 +223,7 @@ function KillSteal()
 			if hp == 0 then return end
 			if player:spellSlot(0).state == 0 and qDmg(enemy) + PlayerAD() > hp and enemy.pos:dist(player.pos) < 325 then
 				CastQ(enemy);
-			elseif player:spellSlot(1).state == 0 and wDmg(enemy) > hp and enemy.pos:dist(player.pos) < 970 then
+			elseif player:spellSlot(1).state == 0 and wDmg(enemy) > hp and enemy.pos:dist(player.pos) < 960 then
 				CastW(enemy);
 			elseif player:spellSlot(1).state == 0 and player:spellSlot(0).state == 0 and wDmg(enemy) + qDmg(enemy) > hp and enemy.pos:dist(player.pos) < 500 then
 				CastQ(enemy)
@@ -283,26 +283,23 @@ local function ondeleteobj(obj)
 end
 
 
-
 --[Spyk Credits]--
 function qDmg(target)
-	if Isolated == false then
-		local qDamage = CalcADmg(target, QlvlDmg[player:spellSlot(0).level] + player.flatPhysicalDamageMod * 1.3, player)
-		return qDamage
-	else
-		local qDamage = CalcADmg(target, (QlvlDmg[player:spellSlot(0).level] + player.flatPhysicalDamageMod * 1.3) * 1, player)
-		return qDamage
-	end
+  local damage = QlvlDmg[player:spellSlot(0).level] + (common.GetBonusAD() * 1.3)
+  	if Isolated then
+    	damage = damage + damage
+  	end
+  	return common.CalculatePhysicalDamage(target, damage)
 end
 
 function wDmg(target)
-	local wDamage = CalcADmg(target, WlvlDmg[player:spellSlot(1).level] + player.flatPhysicalDamageMod * 1, player)
-	return wDamage
+    local damage = WlvlDmg[player:spellSlot(1).level] + (common.GetBonusAD() * 1)
+    return common.CalculatePhysicalDamage(target, damage)
 end
 
 function eDmg(target)
-	local eDamage = CalcADmg(target, ElvlDmg[player:spellSlot(2).level] + player.flatPhysicalDamageMod * .2, player)
-	return eDamage
+	local damage = ElvlDmg[player:spellSlot(2).level] + (common.GetBonusAD() * 0.2)
+	return common.CalculatePhysicalDamage(target, damage)
 end
 
 function PlayerAD()
