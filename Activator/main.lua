@@ -732,7 +732,7 @@ local function OnTick()
 	if healSlot and menu.sum.hs.uh:get() and target then AutoHeal() end
 	if barrierSlot and menu.sum.bs.ub:get() and target then AutoBarrier() end
 	if igniteSlot and menu.sum.ign.Ignite:get() then AutoIgnite() end
-	if menu.pot.usep:get() and not potionOn --[[and not common.InFountain()]] and common.GetPercentHealth(player) <=  menu.pot.usepx:get() then UsePotion() end
+	if menu.pot.usep:get() and not potionOn and not common.InFountain() and common.GetPercentHealth(player) <=  menu.pot.usepx:get() then UsePotion() end
 	if menu.itemd.def.tl:get() and lantern ~= nil then local distance = lantern.pos:dist(player.pos) if distance < 250 then player:castSpell("obj", 62, lantern) end end
 	if menu.pot.useg:get() then for i = 6, 11 do local item = player:spellSlot(i).name if item == "ItemSackOfGold" then player:castSpell("self", i) end end end
 	Shields()
