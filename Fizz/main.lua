@@ -81,22 +81,23 @@ local menu = menu("fizz", "Cyrex Fizz")
 
 local function qDmg(target)
 	local qDamage = QlvlDmg[player:spellSlot(0).level] + (common.GetTotalAP() * .55)
-	return qDamage
+	local qDamage2 = common.GetTotalAD()
+	return common.CalculatePhysicalDamage(target, qDamage2) + common.CalculateMagicDamage(target, qDamage)
 end
 
 local function wDmg(target)
 	local wDamage = WlvlDmg[player:spellSlot(1).level] + (common.GetTotalAP() * .4)
-	return wDamage
+	return common.CalculateMagicDamage(target, wDamage)
 end
 
 local function eDmg(target)
 	local eDamage = ElvlDmg[player:spellSlot(2).level] + (common.GetTotalAP() * .75)
-	return eDamage
+	return common.CalculateMagicDamage(target, eDamage)
 end
 
 local function rDmg(target)
 	local rDamage = RlvlDmg[player:spellSlot(3).level] + (common.GetTotalAP() * .8)
-	return rDamage
+	return common.CalculateMagicDamage(target, rDamage)
 end
 
 local function CastE(target)
@@ -156,7 +157,11 @@ local function Combo()
 					common.DelayAction(function()player:castSpell("pos", 2, (game.mousePos)) end, 0.5)
 				end
 			elseif menu.combo.ed:get() == 2 then
-				common.DelayAction(function()CastE(target)end, 0.5)
+				if target.pos:dist(player.pos) > 410 then
+					CastE(target)
+				elseif target.pos:dist(player.pos) < 390 then
+					common.DelayAction(function()CastE(target)end, 1)
+				end
 			end
 		end
 		if menu.combo.q:get() then
