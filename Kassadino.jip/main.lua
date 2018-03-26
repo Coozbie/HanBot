@@ -1,4 +1,4 @@
-local version = "1.01"
+local version = "1.2"
 
 local avada_lib = module.lib("avada_lib")
 if not avada_lib then
@@ -74,17 +74,86 @@ local menu = menu("kassadin", "Cyrex Kassadin")
 		menu.draws:header("xd", "Drawing Options")
 		menu.draws:boolean("q", "Draw Q Range", true)
 		menu.draws:boolean("e", "Draw R Range", true)
-	menu:header("version", "Version: 1.0")
+	menu:header("version", "Version: 1.2")
 	menu:header("author", "Author: Coozbie")
 
-local function OnTick()
-	if menu.keys.combo:get() then Combo() end
-	if menu.keys.harass:get() then Harass() end
-	if menu.auto.uks:get() then KillSteal() end
-	if menu.keys.run:get() then Run() end
+local function qDmg(target)
+	local qDamage = QlvlDmg[player:spellSlot(0).level] + (common.GetTotalAP() * .7)
+	return common.CalculateMagicDamage(target, qDamage)
 end
 
-function Combo()
+local function wDmg(target)
+	local wDamage = WlvlDmg[player:spellSlot(1).level] + (common.GetTotalAP() * .7)
+	return common.CalculateMagicDamage(target, wDamage)
+end
+
+local function eDmg(target)
+	local eDamage = ElvlDmg[player:spellSlot(2).level] + (common.GetTotalAP() * .7)
+	return common.CalculateMagicDamage(target, eDamage)
+end
+
+local function rDmg(target)
+	local rDamage = RlvlDmg[player:spellSlot(3).level] + (common.GetTotalAP() * .3) + (player.maxPar * .2) --+ (stacksDmg[RSTACK] + player.flatMagicDamageMod * .1 + player.maxPar * .1, player))
+	return common.CalculateMagicDamage(target, rDamage)
+end
+
+local function CastE(target)
+	if player:spellSlot(2).state == 0 and player.path.serverPos:distSqr(target.path.serverPos) < (665 * 665) then
+		local res = gpred.circular.get_prediction(ePred, target)
+		if res and res.startPos:distSqr(res.endPos) < (665 * 665) then
+			player:castSpell("pos", 2, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
+		end
+	end
+end
+
+local function CastR(target)
+	if player:spellSlot(3).state == 0 and player.path.serverPos:distSqr(target.path.serverPos) < (450 * 450) then
+		local res = gpred.circular.get_prediction(rPred, target)
+		if res and res.startPos:distSqr(res.endPos) < (450 * 450) then
+			player:castSpell("pos", 3, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
+		end
+	end
+end
+
+local function CastQ(target)
+	if player:spellSlot(0).state == 0 and player.path.serverPos:distSqr(target.path.serverPos) < (650 * 650) then
+		player:castSpell("obj", 0, target)
+	end
+end
+
+
+local function KillSteal()
+	for i = 0, objManager.enemies_n - 1 do
+		local enemy = objManager.enemies[i]
+ 		if not enemy.isDead and enemy.isVisible and enemy.isTargetable and menu.auto.uks:get() then
+ 			local hp = enemy.health;
+ 			if hp == 0 then return end
+  			if player:spellSlot(0).state == 0 and hp < qDmg(enemy) and player.path.serverPos:distSqr(enemy.path.serverPos) < (650 * 650) then
+	  			CastQ(enemy);
+   			elseif player:spellSlot(2).state == 0 and hp < eDmg(enemy) and player.path.serverPos:distSqr(enemy.path.serverPos) < (665 * 665) then 
+   				CastE(enemy); 
+   			elseif player:spellSlot(3).state == 0 and hp < rDmg(enemy) and menu.auto.urks:get() and player.path.serverPos:distSqr(enemy.path.serverPos) < (450 * 450) then
+   				CastR(enemy);
+   			elseif player:spellSlot(0).state == 0 and player:spellSlot(2).state == 0 and hp < qDmg(enemy) + eDmg(enemy) and player.path.serverPos:distSqr(enemy.path.serverPos) < (665 * 665) then
+   				CastQ(enemy);
+   				CastE(enemy);
+   			elseif player:spellSlot(0).state == 0 and player:spellSlot(2).state == 0 and player:spellSlot(3).state == 0 and hp < qDmg(enemy) + eDmg(enemy) + rDmg(enemy) and menu.auto.urks:get() and player.path.serverPos:distSqr(enemy.path.serverPos) < (665 * 665) then
+   				CastR(enemy);
+   				CastQ(enemy);
+   				CastE(enemy);
+   			elseif player:spellSlot(0).state == 0 and player:spellSlot(2).state == 0 and player:spellSlot(3).state == 0 and player:spellSlot(1).state == 0 and hp < qDmg(enemy) + eDmg(enemy) + rDmg(enemy) + wDmg(enemy) and menu.auto.urks:get() and player.path.serverPos:distSqr(enemy.path.serverPos) < (665 * 665) then	
+   				CastR(enemy);
+   				CastQ(enemy);
+   				CastE(enemy);
+   				if player.path.serverPos:distSqr(enemy.path.serverPos) < (200 * 200) and not orb.core.can_attack() then
+   					player:castSpell("self", 1)
+   				end
+   			end
+  		end
+ 	end
+end
+
+local function Combo()
 	if menu.keys.combo:get() then
 		local target = ts.target
 		if target and not target.isDead then
@@ -108,7 +177,7 @@ function Combo()
 	end
 end
 
-function Harass()
+local function Harass()
 	if menu.keys.harass:get() then
 		if player.par / player.maxPar * 100 >= menu.harass.Mana:get() then
 			local target = ts.target
@@ -127,64 +196,7 @@ function Harass()
 	end
 end
 
-function CastE(target)
-	if player:spellSlot(2).state == 0 then
-		local res = gpred.circular.get_prediction(ePred, target)
-		if res and res.startPos:dist(res.endPos) < 665 then
-			player:castSpell("pos", 2, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
-		end
-	end
-end
-
-function CastR(target)
-	if player:spellSlot(3).state == 0 then
-		local res = gpred.circular.get_prediction(rPred, target)
-		if res and res.startPos:dist(res.endPos) < 450 then
-			player:castSpell("pos", 3, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
-		end
-	end
-end
-
-function CastQ(target)
-	if player:spellSlot(0).state == 0 and target.pos:dist(player.pos) <= 650 then
-		player:castSpell("obj", 0, target)
-	end
-end
-
-
-function KillSteal()
-	for i = 0, objManager.enemies_n - 1 do
-		local enemy = objManager.enemies[i]
- 		if not enemy.isDead and enemy.isVisible and enemy.isTargetable and menu.auto.uks:get() then
- 			local hp = enemy.health;
- 			if hp == 0 then return end
-  			if player:spellSlot(0).state == 0 and hp < qDmg(enemy) then
-	  			CastQ(enemy);
-   			elseif player:spellSlot(2).state == 0 and hp < eDmg(enemy) then 
-   				CastE(enemy); 
-   			elseif player:spellSlot(3).state == 0 and hp < rDmg(enemy) and menu.auto.urks:get() then
-   				CastR(enemy);
-   			elseif player:spellSlot(0).state == 0 and player:spellSlot(2).state == 0 and hp < qDmg(enemy) + eDmg(enemy) then
-   				CastQ(enemy);
-   				CastE(enemy);
-   			elseif player:spellSlot(0).state == 0 and player:spellSlot(2).state == 0 and player:spellSlot(3).state == 0 and hp < qDmg(enemy) + eDmg(enemy) + rDmg(enemy) and menu.auto.urks:get() then
-   				CastR(enemy);
-   				CastQ(enemy);
-   				CastE(enemy);
-   			elseif player:spellSlot(0).state == 0 and player:spellSlot(2).state == 0 and player:spellSlot(3).state == 0 and player:spellSlot(1).state == 0 and hp < qDmg(enemy) + eDmg(enemy) + rDmg(enemy) + wDmg(enemy) and menu.auto.urks:get() then	
-   				CastR(enemy);
-   				CastQ(enemy);
-   				CastE(enemy);
-   				if common.GetDistance(player, enemy) <= 200 and not orb.core.can_attack() then
-   					player:castSpell("self", 1)
-   				end
-   			end
-  		end
- 	end
-end
-
-
-function Run()
+local function Run()
 	if menu.keys.run:get() then
 		player:move((game.mousePos))
 		if player:spellSlot(3).state == 0 then
@@ -194,7 +206,7 @@ function Run()
 end
 
 
-function CountEnemyHeroInRange(range)
+local function CountEnemyHeroInRange(range)
 	local range, count = range*range, 0 
 	for i = 0, objManager.enemies_n - 1 do
 		if player.pos:distSqr(objManager.enemies[i].pos) < range then 
@@ -204,43 +216,12 @@ function CountEnemyHeroInRange(range)
 	return count 
 end
 
-
---[Spyk Credits]--
-function qDmg(target)
-	local qDamage = CalcMagicDmg(target, QlvlDmg[player:spellSlot(0).level] + player.flatMagicDamageMod * .7, player)
-	return qDamage
+local function OnTick()
+	if orb.combat.is_active() then Combo() end
+	if orb.menu.hybrid:get() then Harass() end
+	if menu.auto.uks:get() then KillSteal() end
+	if menu.keys.run:get() then Run() end
 end
-
-function wDmg(target)
-	local wDamage = CalcMagicDmg(target, WlvlDmg[player:spellSlot(1).level] + player.flatMagicDamageMod * .7, player)
-	return wDamage
-end
-
-function eDmg(target)
-	local eDamage = CalcMagicDmg(target, ElvlDmg[player:spellSlot(2).level] + player.flatMagicDamageMod * .7, player)
-	return eDamage
-end
-
-function rDmg(target)
-	local rDamage = CalcMagicDmg(target, RlvlDmg[player:spellSlot(3).level] + player.flatMagicDamageMod * .3 + player.maxPar * .2, player) --+ (stacksDmg[RSTACK] + player.flatMagicDamageMod * .1 + player.maxPar * .1, player))
-	return rDamage
-end
-
-
-function CalcMagicDmg(target, amount, from)
-	local from = from or player or objManager.player;
-	local target = target or orb.combat.target;
-	local amount = amount or 0;
-	local targetMR = target.spellBlock * math.ceil(from.percentMagicPenetration) - from.flatMagicPenetration;
-	local dmgMul = 100 / (100 + targetMR);
-	if dmgMul < 0 then
-		dmgMul = 2 - (100 / (100 - targetMR));
-	end
-	amount = amount * dmgMul;
-	return math.floor(amount)
-end
---[End Spyk Credits]--
-
 
 local function OnDraw()
 	if menu.draws.q:get() and player:spellSlot(0).state == 0 and player.isOnScreen then
@@ -251,7 +232,7 @@ local function OnDraw()
 	end
 end
 
-cb.add(cb.tick, OnTick)
+orb.combat.register_f_pre_tick(OnTick)
 cb.add(cb.draw, OnDraw)
 
 print("Cyrex Kassadin v"..version..": Loaded")
