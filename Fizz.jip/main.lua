@@ -1,15 +1,32 @@
+local avada_lib = module.lib('avada_lib')
+if not avada_lib then
+	console.set_color(12)
+	print("You need to have Avada Lib in your community_libs folder to run Lux!")
+	print("You can find it here:")
+	console.set_color(11)
+	print("https://gitlab.soontm.net/get_clear_zip.php?fn=avada_lib")
+	console.set_color(15)
+	return
+elseif avada_lib.version < 1.07 then
+	console.set_color(12)
+	print("Your need to have Avada Lib updated to run to run Lux!")
+	print("You can find it here:")
+	console.set_color(11)
+	print("https://gitlab.soontm.net/get_clear_zip.php?fn=avada_lib")
+	console.set_color(15)
+	return
+end
 local version = "1.0"
 
-local alib = module.load("avada_lib")
-local common = alib.common
-local draw = alib.draw
-local ts = alib.targetSelector
+local common = avada_lib.common
+local draw = avada_lib.draw
+local ts = avada_lib.targetSelector
 local WP, WCheck = nil, nil
 local onE = false
 local enemies = common.GetEnemyHeroes()
 
-local orb = module.internal("orb/main")
-local gpred = module.internal("pred/main")
+local orb = module.internal("orb")
+local gpred = module.internal("pred")
 
 local QlvlDmg = {10, 25, 40, 55, 70}
 local WlvlDmg = {20, 30, 40, 50, 60}
@@ -19,7 +36,7 @@ local RlvlDmg = {225, 325, 425}
 local ePred = { delay = 0.25, radius = 270, speed = 1000, boundingRadiusMod = 0, collision = { hero = false, minion = false } }
 local rPred = { delay = 0.25, width = 120, speed = 1350, boundingRadiusMod = 1, collision = { hero = true, minion = false } }
 
-local menu = menuconfig("fizz", "Cyrex Fizz")
+local menu = menu("fizz", "Cyrex Fizz")
 	ts = ts(menu, 1200)
 	menu:header("script", "Cyrex Fizz")
 	menu:menu("keys", "Key Settings")
@@ -62,102 +79,111 @@ local menu = menuconfig("fizz", "Cyrex Fizz")
 	menu:header("version", "Version: 1.0")
 	menu:header("author", "Author: Coozbie")
 
-function OnTick()
-	if menu.keys.combo:get() then Combo() end
-	if menu.keys.harass:get() then Harass() end
-	if menu.auto.uks:get() then KillSteal() end
-	if menu.keys.run:get() then Run() end
-	if menu.keys.manual:get() then AimR() end
+local function qDmg(target)
+	local qDamage = QlvlDmg[player:spellSlot(0).level] + (common.GetTotalAP() * .55)
+	return qDamage
 end
 
-function Combo()
-	if menu.keys.combo:get() then
-		local target = ts.target
-		if target and not target.isDead then
-			if menu.combo.e:get() then
-				if menu.combo.ed:get() == 1 then
-					if common.CanUseSpell(2) and common.GetDistance(player, target) <= 600 then
-						common.DelayAction(function()game.cast("pos", 2, vec3(game.mousePos)) end, 0.5)
-					end
-				elseif menu.combo.ed:get() == 2 then
-					CastE(target)
-				end
-			end
-			if menu.combo.q:get() then
-				CastQ(target)
-			end
-			if menu.combo.w:get() and common.CanUseSpell(1) and WP and common.GetDistance(player, target) <= 225 and not orb.core.can_attack() then
-				game.cast("self", 1)
-			elseif menu.combo.w:get() and common.CanUseSpell(1) and wDmg(target) > target.health and common.GetDistance(player, target) <= 225 and not orb.core.can_attack() then
-				game.cast("self", 1)
-			end
-			if menu.combo.r:get() and common.GetDistance(player, target) >= menu.combo.rr:get() then
-				CastR(target)
-			end
-		end
-	end
+local function wDmg(target)
+	local wDamage = WlvlDmg[player:spellSlot(1).level] + (common.GetTotalAP() * .4)
+	return wDamage
 end
 
-function Harass()
-	if menu.keys.harass:get() then
-		if player.par / player.maxPar * 100 >= menu.harass.Mana:get() then
-			local target = ts.target
-			if target and not target.isDead then
-				if menu.harass.q:get() then
-					CastQ(target)
-				end
-				if menu.harass.w:get() and common.CanUseSpell(1) and common.GetDistance(player, target) <= 225 and not orb.core.can_attack() then
-					game.cast("self", 1)
-				end
-			end
-		end
-	end
+local function eDmg(target)
+	local eDamage = ElvlDmg[player:spellSlot(2).level] + (common.GetTotalAP() * .75)
+	return eDamage
 end
 
+local function rDmg(target)
+	local rDamage = RlvlDmg[player:spellSlot(3).level] + (common.GetTotalAP() * .8)
+	return rDamage
+end
 
-function CastE(target)
-	if common.CanUseSpell(2) then
+local function CastE(target)
+	if player:spellSlot(2).state == 0 and player.path.serverPos:distSqr(target.path.serverPos) < (400 * 400) then
 		local res = gpred.circular.get_prediction(ePred, target)
 		if res and res.startPos:dist(res.endPos) < 400 then
-			game.cast("pos", 2, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
+			player:castSpell("pos", 2, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
 		end
 	end
 end
 
-function CastR(target)
-	if common.CanUseSpell(3) then
-		local seg = gpred.linear.get_prediction(rPred, target)
-		if seg and seg.startPos:dist(seg.endPos) < 1275 then
-			if not gpred.collision.get_prediction(rPred, seg, target) then
-				game.cast("pos", 3, vec3(seg.endPos.x, game.mousePos.y, seg.endPos.y))
-			end
-		end
+local function CastR(target)
+    if player:spellSlot(3).state == 0 and player.path.serverPos:distSqr(target.path.serverPos) < (1300 * 1300) then
+        local seg = gpred.linear.get_prediction(rPred, target)
+        if seg and seg.startPos:dist(seg.endPos) > 910 and seg.startPos:dist(seg.endPos) < 1300 then
+            if not gpred.collision.get_prediction(rPred, seg, target) then
+                player:castSpell("pos", 3, vec3(seg.endPos.x, game.mousePos.y, seg.endPos.y))
+            end
+        end
+    end
+end
+
+local function CastQ(target)
+	if player:spellSlot(0).state == 0 and target.pos:dist(player.pos) <= menu.combo.qr:get() then
+		player:castSpell("obj", 0, target)
 	end
 end
 
-function CastQ(target)
-	if common.CanUseSpell(0) and common.GetDistance(player, target) <= menu.combo.qr:get() then
-		game.cast("obj", 0, target)
-	end
-end
 
-
-function KillSteal()
-	for i, enemy in pairs(enemies) do
-		if not enemy.isDead and enemy.isVisible and enemy.isTargetable and menu.auto.uks:get() then
-			local hp = enemy.health;
+local function KillSteal()
+	for i = 0, objManager.enemies_n - 1 do
+		local enemy = objManager.enemies[i]
+		if enemy and common.IsValidTarget(enemy) and menu.auto.uks:get() then
+			local hp = enemy.health
+			local dist = player.path.serverPos:distSqr(enemy.path.serverPos)
 			if hp == 0 then return end
-			if player:spellslot(0).state == 0 and qDmg(enemy) > hp then
+			if player:spellSlot(0).state == 0 and qDmg(enemy) > hp and dist < (400 * 400) then
 				CastQ(enemy);
-			elseif player:spellslot(3).state == 0 and rDmg(enemy) > hp and menu.auto.urks:get() then
+			elseif player:spellSlot(3).state == 0 and rDmg(enemy) > hp and menu.auto.urks:get() and dist < (1300 * 1300) then
 				CastR(enemy);
 			end
 		end
 	end
 end
 
-function oncreateobj(obj)
-    if obj and obj.name and obj.type then
+local function Combo()
+	local target = ts.target
+	if target and common.IsValidTarget(target) and not target.buff["sionpassivezombie"] then
+		if menu.combo.e:get() then
+			if menu.combo.ed:get() == 1 then
+				if player:spellSlot(2).state == 0 and target.pos:dist(player.pos) <= 600 then
+					common.DelayAction(function()player:castSpell("pos", 2, (game.mousePos)) end, 0.5)
+				end
+			elseif menu.combo.ed:get() == 2 then
+				CastE(target)
+			end
+		end
+		if menu.combo.q:get() then
+			CastQ(target)
+		end
+		if menu.combo.w:get() and player:spellSlot(1).state == 0 and WP and target.pos:dist(player.pos) <= 225 and not orb.core.can_attack() then
+			player:castSpell("self", 1)
+		elseif menu.combo.w:get() and player:spellSlot(1).state == 0 and wDmg(target) > target.health and target.pos:dist(player.pos) <= 225 and not orb.core.can_attack() then
+			player:castSpell("self", 1)
+		end
+		if menu.combo.r:get() and target.pos:dist(player.pos) >= menu.combo.rr:get() then
+			CastR(target)
+		end
+	end
+end
+
+local function Harass()
+	if player.par / player.maxPar * 100 >= menu.harass.Mana:get() then
+		local target = ts.target
+		if target and common.IsValidTarget(target) and not target.buff["sionpassivezombie"] then
+			if menu.harass.q:get() and player:spellSlot(0).state == 0 then
+				CastQ(target)
+			end
+			if menu.harass.w:get() and player:spellSlot(1).state == 0 and target.pos:dist(player.pos) <= 225 and not orb.core.can_attack() then
+				player:castSpell("self", 1)
+			end
+		end
+	end
+end
+
+local function oncreateobj(obj)
+    if obj.type then
         if obj.name:find("Fizz_Base_W_DmgMarkerMaintain") then
             WP = true
         end
@@ -168,8 +194,8 @@ function oncreateobj(obj)
     end
 end
 
-function ondeleteobj(obj)
-    if obj and obj.name and obj.type then
+local function ondeleteobj(obj)
+    if obj.type then
         if obj.name:find("Fizz_Base_W_DmgMarkerMaintain") then
             WP = false
         end
@@ -179,84 +205,55 @@ function ondeleteobj(obj)
     end
 end
 
---[[function processSpell(unit, spellProc)
-	if unit == player and player:spellslot(2).name == "FizzE" then
+--[[local function processSpell(unit, spellProc)
+	if unit == player and player:spellSlot(2).name == "FizzE" then
 		onE = true print("E ON")
-	elseif player:spellslot(2).name == "FizzETwo" then 
+	elseif player:spellSlot(2).name == "FizzETwo" then 
 		onE = false print("E OFF")
 	end
 end]]--
 
-function Run()
+local function Run()
 	if menu.keys.run:get() then
-		game.issue("move", vec3(game.mousePos))
-		if common.CanUseSpell(2) then
-			game.cast("pos", 2, vec3(game.mousePos))
+		player:move((game.mousePos))
+		if player:spellSlot(2).state == 0 then
+			player:castSpell("pos", 2, (game.mousePos))
 		end
 	end
 end
 
-function AimR()
+local function AimR()
 	if menu.keys.manual:get() then
 		local target = ts.target
-		if common.GetDistance(player, target) <= 1200 then
+		if target and target.pos:dist(player.pos) <= 1200 then
 			CastR(target)
 		end
 	end
 end
 
 
-
---[Spyk Credits]--
-function qDmg(target)
-	local qDamage = CalcMagicDmg(target, QlvlDmg[player:spellslot(0).level] + player.flatMagicDamageMod * .55, player)
-	return qDamage
+local function OnTick()
+	if orb.combat.is_active() then Combo() end
+	if orb.menu.hybrid:get() then Harass() end
+	if menu.auto.uks:get() then KillSteal() end
+	if menu.keys.run:get() then Run() end
+	if menu.keys.manual:get() then AimR() end
 end
 
-function wDmg(target)
-	local wDamage = CalcMagicDmg(target, WlvlDmg[player:spellslot(1).level] + player.flatMagicDamageMod * .4, player)
-	return wDamage
-end
-
-function eDmg(target)
-	local eDamage = CalcMagicDmg(target, ElvlDmg[player:spellslot(2).level] + player.flatMagicDamageMod * .75, player)
-	return eDamage
-end
-
-function rDmg(target)
-	local rDamage = CalcMagicDmg(target, RlvlDmg[player:spellslot(3).level] + player.flatMagicDamageMod * .8, player)
-	return rDamage
-end
-
-
-function CalcMagicDmg(target, amount, from)
-	local from = from or player or objmanager.player;
-	local target = target or orb.combat.target;
-	local amount = amount or 0;
-	local targetMR = target.spellBlock * math.ceil(from.percentMagicPenetration) - from.flatMagicPenetration;
-	local dmgMul = 100 / (100 + targetMR);
-	if dmgMul < 0 then
-		dmgMul = 2 - (100 / (100 - targetMR));
-	end
-	amount = amount * dmgMul;
-	return math.floor(amount)
-end
---[End Spyk Credits]--
-
-
-function OnDraw()
-	if menu.draws.q:get() and common.CanUseSpell(0) then
-		glx.world.circle(player.pos, menu.combo.qr:get(), 2, draw.color.red, 100)
-	end
-	if menu.draws.e:get() and common.CanUseSpell(3) then
-		glx.world.circle(player.pos, menu.combo.rr:get(), 3, draw.color.blue, 50)
+local function OnDraw()
+	if not player.isDead and player.isOnScreen then
+		if menu.draws.q:get() and player:spellSlot(0).state == 0 then
+			graphics.draw_circle(player.pos, menu.combo.qr:get(), 2, graphics.argb(255, 255, 255, 255), 50)
+		end
+		if menu.draws.e:get() and player:spellSlot(3).state == 0 then
+			graphics.draw_circle(player.pos, menu.combo.rr:get(), 2, graphics.argb(255, 255, 255, 255), 50)
+		end
 	end
 end
 
-callback.add(enum.callback.tick, function() OnTick() end)
-callback.add(enum.callback.draw, function() OnDraw() end)
-callback.add(enum.callback.recv.createobj, oncreateobj)
-callback.add(enum.callback.recv.deleteobj, ondeleteobj)
---callback.add(enum.callback.recv.spell, processSpell)
+orb.combat.register_f_pre_tick(OnTick)
+cb.add(cb.draw, OnDraw)
+cb.add(cb.createobj, oncreateobj)
+cb.add(cb.deleteobj, ondeleteobj)
 
 print("Cyrex Fizz v"..version..": Loaded")
