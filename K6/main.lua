@@ -81,18 +81,108 @@ local menu = menu("k6", "Khantum Phyzix")
 	menu:header("version", "Version: 1.04")
 	menu:header("author", "Author: Coozbie")
 
-local function OnTick()
-	if orb.combat.is_active() then Combo() end
-	if orb.menu.hybrid:get() then Harass() end
-	if menu.auto.uks:get() then KillSteal() end
-	if menu.keys.run:get() then Run() end
-	if menu.draws.q:get() or menu.draws.e:get() then EvolutionCheck() end
-	if orb.menu.lane_clear:get() then
-		Clear()
+
+local function qDmg(target)
+  local damage = QlvlDmg[player:spellSlot(0).level] + (common.GetBonusAD() * 1.3)
+  	if Isolated then
+    	damage = damage + damage
+  	end
+  	return common.CalculatePhysicalDamage(target, damage)
+end
+
+local function wDmg(target)
+    local damage = WlvlDmg[player:spellSlot(1).level] + (common.GetBonusAD() * 1)
+    return common.CalculatePhysicalDamage(target, damage)
+end
+
+local function eDmg(target)
+	local damage = ElvlDmg[player:spellSlot(2).level] + (common.GetBonusAD() * 0.2)
+	return common.CalculatePhysicalDamage(target, damage)
+end
+
+local function CastE(target)
+	if player:spellSlot(2).state == 0 then
+		if player:spellSlot(2).name == "KhazixE" then
+			local res = gpred.circular.get_prediction(ePred, target)
+			if res and res.startPos:dist(res.endPos) < 600 and res.startPos:dist(res.endPos) > 325  then
+				player:castSpell("pos", 2, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
+			end
+		elseif player:spellSlot(2).name == "KhazixELong" then
+			local res = gpred.circular.get_prediction(ePred, target)
+			if res and res.startPos:dist(res.endPos) < 900 and res.startPos:dist(res.endPos) > 400 then
+				player:castSpell("pos", 2, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
+			end
+		end
 	end
 end
 
-function Combo()
+local function CastW(target)
+	if player:spellSlot(1).state == 0 then
+		local seg = gpred.linear.get_prediction(wPred, target)
+		if seg and seg.startPos:dist(seg.endPos) < 970 then
+			if not gpred.collision.get_prediction(wPred, seg, target) then
+				player:castSpell("pos", 1, vec3(seg.endPos.x, game.mousePos.y, seg.endPos.y))
+			end
+		end
+	end
+end
+
+local function CastR(target)
+	if player:spellSlot(3).state == 0 then
+		player:castSpell("self", 3)
+	end
+end
+
+local function CastQ(target)
+	if player:spellSlot(0).state == 0 then
+		if player:spellSlot(0).name == "KhazixQ" then
+			if target.pos:dist(player.pos) <= 325 then
+				player:castSpell("obj", 0, target)
+			end
+		elseif player:spellSlot(0).name == "KhazixQLong" then
+			if target.pos:dist(player.pos) then
+				player:castSpell("obj", 0, target)
+			end
+		end
+	end
+end
+
+local function PlayerAD()
+	if Isolated == false then
+    	return player.flatPhysicalDamageMod + player.baseAttackDamage
+    else
+    	return player.flatPhysicalDamageMod + player.baseAttackDamage + (IsoDmg[player.levelRef] + player.flatPhysicalDamageMod * .2 )
+    end
+end
+
+local function KillSteal()
+	for i = 0, objManager.enemies_n - 1 do
+		local enemy = objManager.enemies[i]
+		if not enemy.isDead and enemy.isVisible and enemy.isTargetable and menu.auto.uks:get() then
+			local hp = enemy.health;
+			if hp == 0 then return end
+			if player:spellSlot(0).state == 0 and qDmg(enemy) + PlayerAD() > hp and enemy.pos:dist(player.pos) < 325 then
+				CastQ(enemy);
+			elseif player:spellSlot(1).state == 0 and wDmg(enemy) > hp and enemy.pos:dist(player.pos) < 960 then
+				CastW(enemy);
+			elseif player:spellSlot(1).state == 0 and player:spellSlot(0).state == 0 and wDmg(enemy) + qDmg(enemy) > hp and enemy.pos:dist(player.pos) < 500 then
+				CastQ(enemy)
+				CastW(enemy)
+			elseif player:spellSlot(2).state == 0 and player:spellSlot(0).state == 0 and qDmg(enemy) + eDmg(enemy) + PlayerAD() > hp and menu.auto.ukse:get() and common.GetPercentHealth(player) >= menu.auto.mhp:get() and enemy.pos:dist(player.pos) < 990 then
+				CastE(enemy)
+				CastQ(enemy)
+			elseif player:spellSlot(1).state == 0 and player:spellSlot(0).state == 0 and player:spellSlot(2).state == 0 and qDmg(enemy) + eDmg(enemy) + wDmg(enemy) + PlayerAD() > hp and menu.auto.ukse:get() and common.GetPercentHealth(player) >= menu.auto.mhp:get() and enemy.pos:dist(player.pos) < 990 then
+				CastE(enemy)
+				CastQ(enemy)
+				if enemy.pos:dist(player.pos) <= 700 then
+					CastW(enemy)
+				end
+			end
+		end
+	end
+end
+
+local function Combo()
 	local target = ts.target
 	if target and common.IsValidTarget(target) then
 		if menu.combo.e:get() then
@@ -128,7 +218,7 @@ function Combo()
 	end
 end
 
-function Harass()
+local function Harass()
 	local target = ts.target
 	if target and common.IsValidTarget(target) then
 		if menu.keys.harass:get() then
@@ -144,7 +234,7 @@ function Harass()
 	end
 end
 
-function Clear()
+local function Clear()
 	local target = { obj = nil, health = 0, mode = "jungleclear" }
 	local aaRange = player.attackRange + player.boundingRadius + 200
 	for i = 0, minionmanager.size[TEAM_NEUTRAL] - 1 do
@@ -167,83 +257,7 @@ function Clear()
 end
 
 
-function CastE(target)
-	if player:spellSlot(2).state == 0 then
-		if player:spellSlot(2).name == "KhazixE" then
-			local res = gpred.circular.get_prediction(ePred, target)
-			if res and res.startPos:dist(res.endPos) < 600 and res.startPos:dist(res.endPos) > 325  then
-				player:castSpell("pos", 2, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
-			end
-		elseif player:spellSlot(2).name == "KhazixELong" then
-			local res = gpred.circular.get_prediction(ePred, target)
-			if res and res.startPos:dist(res.endPos) < 900 and res.startPos:dist(res.endPos) > 400 then
-				player:castSpell("pos", 2, vec3(res.endPos.x, game.mousePos.y, res.endPos.y))
-			end
-		end
-	end
-end
-
-function CastW(target)
-	if player:spellSlot(1).state == 0 then
-		local seg = gpred.linear.get_prediction(wPred, target)
-		if seg and seg.startPos:dist(seg.endPos) < 970 then
-			if not gpred.collision.get_prediction(wPred, seg, target) then
-				player:castSpell("pos", 1, vec3(seg.endPos.x, game.mousePos.y, seg.endPos.y))
-			end
-		end
-	end
-end
-
-function CastR(target)
-	if player:spellSlot(3).state == 0 then
-		player:castSpell("self", 3)
-	end
-end
-
-function CastQ(target)
-	if player:spellSlot(0).state == 0 then
-		if player:spellSlot(0).name == "KhazixQ" then
-			if target.pos:dist(player.pos) <= 325 then
-				player:castSpell("obj", 0, target)
-			end
-		elseif player:spellSlot(0).name == "KhazixQLong" then
-			if target.pos:dist(player.pos) then
-				player:castSpell("obj", 0, target)
-			end
-		end
-	end
-end
-
-
-function KillSteal()
-	for i = 0, objManager.enemies_n - 1 do
-		local enemy = objManager.enemies[i]
-		if not enemy.isDead and enemy.isVisible and enemy.isTargetable and menu.auto.uks:get() then
-			local hp = enemy.health;
-			if hp == 0 then return end
-			if player:spellSlot(0).state == 0 and qDmg(enemy) + PlayerAD() > hp and enemy.pos:dist(player.pos) < 325 then
-				CastQ(enemy);
-			elseif player:spellSlot(1).state == 0 and wDmg(enemy) > hp and enemy.pos:dist(player.pos) < 960 then
-				CastW(enemy);
-			elseif player:spellSlot(1).state == 0 and player:spellSlot(0).state == 0 and wDmg(enemy) + qDmg(enemy) > hp and enemy.pos:dist(player.pos) < 500 then
-				CastQ(enemy)
-				CastW(enemy)
-			elseif player:spellSlot(2).state == 0 and player:spellSlot(0).state == 0 and qDmg(enemy) + eDmg(enemy) + PlayerAD() > hp and menu.auto.ukse:get() and common.GetPercentHealth(player) >= menu.auto.mhp:get() and enemy.pos:dist(player.pos) < 990 then
-				CastE(enemy)
-				CastQ(enemy)
-			elseif player:spellSlot(1).state == 0 and player:spellSlot(0).state == 0 and player:spellSlot(2).state == 0 and qDmg(enemy) + eDmg(enemy) + wDmg(enemy) + PlayerAD() > hp and menu.auto.ukse:get() and common.GetPercentHealth(player) >= menu.auto.mhp:get() and enemy.pos:dist(player.pos) < 990 then
-				CastE(enemy)
-				CastQ(enemy)
-				if enemy.pos:dist(player.pos) <= 700 then
-					CastW(enemy)
-				end
-			end
-		end
-	end
-end
-
-
-function Run()
+local function Run()
 	if menu.keys.run:get() then
 		player:move((game.mousePos))
 		if player:spellSlot(2).state == 0 then
@@ -252,7 +266,7 @@ function Run()
 	end
 end
 
-function EvolutionCheck()
+local function EvolutionCheck()
     if player:spellSlot(0).name == "KhazixQ" then
         QRange = 325
     elseif player:spellSlot(0).name == "KhazixQLong" then
@@ -283,34 +297,7 @@ local function ondeleteobj(obj)
 end
 
 
---[Spyk Credits]--
-function qDmg(target)
-  local damage = QlvlDmg[player:spellSlot(0).level] + (common.GetBonusAD() * 1.3)
-  	if Isolated then
-    	damage = damage + damage
-  	end
-  	return common.CalculatePhysicalDamage(target, damage)
-end
-
-function wDmg(target)
-    local damage = WlvlDmg[player:spellSlot(1).level] + (common.GetBonusAD() * 1)
-    return common.CalculatePhysicalDamage(target, damage)
-end
-
-function eDmg(target)
-	local damage = ElvlDmg[player:spellSlot(2).level] + (common.GetBonusAD() * 0.2)
-	return common.CalculatePhysicalDamage(target, damage)
-end
-
-function PlayerAD()
-	if Isolated == false then
-    	return player.flatPhysicalDamageMod + player.baseAttackDamage
-    else
-    	return player.flatPhysicalDamageMod + player.baseAttackDamage + (IsoDmg[player.levelRef] + player.flatPhysicalDamageMod * .2 )
-    end
-end
-
-function CountEnemyHeroInRange(range)
+local function CountEnemyHeroInRange(range)
 	local range, count = range*range, 0 
 	for i = 0, objManager.enemies_n - 1 do
 		if player.pos:distSqr(objManager.enemies[i].pos) < range then 
@@ -320,17 +307,18 @@ function CountEnemyHeroInRange(range)
 	return count 
 end
 
-function CalcADmg(target, amount, from)
-	local from = from or player or objManager.player;
-	local target = target or orb.combat.target;
-	local amount = amount or 0;
-	local targetD = target.armor * math.ceil(from.percentBonusArmorPenetration);
-	local dmgMul = 100 / (100 + targetD);
-	amount = amount * dmgMul;
-	return math.floor(amount)
+local function OnTick()
+	if orb.combat.is_active() then Combo() end
+	if orb.menu.hybrid:get() then Harass() end
+	if menu.auto.uks:get() then KillSteal() end
+	if menu.keys.run:get() then Run() end
+	if menu.draws.q:get() or menu.draws.e:get() then EvolutionCheck() end
+	if orb.menu.lane_clear:get() then
+		Clear()
+	end
 end
 
-function OnDraw()
+local function OnDraw()
 	if menu.draws.q:get() and player:spellSlot(0).state == 0 and player.isOnScreen then
 		graphics.draw_circle(player.pos, QRange, 2, graphics.argb(255, 168, 0, 157), 50)
 	end
@@ -339,7 +327,7 @@ function OnDraw()
 	end
 end
 
-cb.add(cb.tick, OnTick)
+orb.combat.register_f_pre_tick(OnTick)
 cb.add(cb.draw, OnDraw)
 cb.add(cb.createobj, oncreateobj)
 cb.add(cb.deleteobj, ondeleteobj)
