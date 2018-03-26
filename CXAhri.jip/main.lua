@@ -76,12 +76,25 @@ local menu = menu("ahrigod", "Cyrex Ahri")
 	menu:header("version", "Version: 1.4")
 	menu:header("author", "Author: Coozbie")
 
-local function OnTick()
-	if orb.combat.is_active() then Combo() end
-	if orb.menu.hybrid:get() then Harass() end
+
+local function CastR()
+	if menu.combo.r:get() and player:spellSlot(3).state == 0 then
+		player:castSpell("pos", 3, game.mousePos)
+	end
 end
 
-function Combo()
+
+local function CountEnemyHeroInRange(range)
+	local range, count = range*range, 0 
+	for i = 0, objManager.enemies_n - 1 do
+		if player.pos:distSqr(objManager.enemies[i].pos) < range then 
+	 		count = count + 1 
+	 	end 
+	end 
+	return count 
+end
+
+local function Combo()
 	local target = ts.target
 	if target and common.IsValidTarget(target) then
 		if menu.combo.e:get() and player:spellSlot(2).state == 0 and player.path.serverPos:dist(target.path.serverPos) < 950 then
@@ -129,7 +142,7 @@ function Combo()
 	end
 end
 
-function Harass()
+local function Harass()
 	local target = ts.target
 	if target and common.IsValidTarget(target) then
 		if player.par / player.maxPar * 100 >= menu.harass.Mana:get() then
@@ -158,32 +171,14 @@ function Harass()
 	end
 end
 
-function CastR()
-	if menu.combo.r:get() and player:spellSlot(3).state == 0 then
-		player:castSpell("pos", 3, game.mousePos)
-	end
-end
-
-
-function CountEnemyHeroInRange(range)
-	local range, count = range*range, 0 
-	for i = 0, objManager.enemies_n - 1 do
-		if player.pos:distSqr(objManager.enemies[i].pos) < range then 
-	 		count = count + 1 
-	 	end 
-	end 
-	return count 
-end
-
-
---[[function CD()
+--[[local function CD()
 	if menu.keys.getcd:get() then
 		print(player:spellSlot(4).name)
 	end
 end
 ]]--
 
-function OnUpdateBuff(buff, causer)
+local function OnUpdateBuff(buff, causer)
 	if buff and buff.valid and buff.owner and buff.owner.type == player.type and buff.owner.team == TEAM_ENEMY then
 		if buff.type == 22 or buff.name == "AhriSeduce" then
 			Charm = true
@@ -191,7 +186,7 @@ function OnUpdateBuff(buff, causer)
 	end
 end
 
-function OnRemoveBuff(buff, causer)
+local function OnRemoveBuff(buff, causer)
 	if buff and buff.valid and buff.owner and buff.owner.type == player.type and buff.owner.team == TEAM_ENEMY then
 		if buff.type == 22 or buff.name == "AhriSeduce" then
 			Charm = false
@@ -199,9 +194,13 @@ function OnRemoveBuff(buff, causer)
 	end
 end 
 
+local function OnTick()
+	if orb.combat.is_active() then Combo() end
+	if orb.menu.hybrid:get() then Harass() end
+end
 
 
-function OnDraw()
+local function OnDraw()
 	if menu.draws.q:get() and player:spellSlot(0).state == 0 and player.isOnScreen then
 		graphics.draw_circle(player.pos, 880, 2, graphics.argb(255, 7, 141, 237), 70)
 	end
@@ -213,7 +212,7 @@ function OnDraw()
 	end
 end
 
-cb.add(cb.tick, OnTick)
+orb.combat.register_f_pre_tick(OnTick)
 cb.add(cb.draw, OnDraw)
 cb.add(cb.removebuff, OnRemoveBuff)
 cb.add(cb.updatebuff, OnUpdateBuff)
